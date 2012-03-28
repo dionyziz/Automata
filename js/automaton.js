@@ -1,16 +1,23 @@
 function DFA( alphabet ) {
     // each state is an int from 1 up to .numStates
-    this.numStates = 0;
     // flip alphabet
     this.alphabet = {};
+    this.transitions = {
+        s: {}
+    };
     for ( var i = 0; i < alphabet.length; ++i ) {
         this.alphabet[ alphabet[ i ] ] = true;
+        this.transitions[ 's' ][ alphabet[ i ] ] = 's';
     }
     // array from state to dictionary from alphabet symbol to state
-    this.transitions = [];
-    this.currentState = this.startState = 1;
-    // set of states that accept, array from state to true/false
+    this.numStates = 1;
+    this.states = {
+        's': true
+    };
+    this.startState = 's';
+    // set of states that accept, array of state keys
     this.accept = [];
+    this.reset();
     EventEmitter.call( this );
 }
 
@@ -18,35 +25,51 @@ DFA.prototype = {
     constructor: DFA,
     addTransition: function( from, via, to ) {
         assert( typeof this.alphabet[ via ] != 'undefined' );
-        this.increaseStatesTo( from );
-        this.increaseStatesTo( to );
+        assert( typeof this.states[ from ] != 'undefined' );
+        assert( typeof this.states[ to ] != 'undefined' );
         this.transitions[ from ][ via ] = to;
     },
-    increaseStatesTo: function( numStates ) {
-        for ( var i = this.numStates + 1; i <= numStates; ++i ) {
-            this.accept[ i ] = false;
-            this.transitions[ i ] = {};
+    addState: function( state ) {
+        this.states[ state ] = true;
+        this.transitions[ state ] = {};
+        for ( var sigma in this.alphabet ) {
+            this.transitions[ state ][ sigma ] = state;
         }
-        if ( numStates > this.numStates ) {
-            console.log( 'Increasing automaton states to ' + numStates );
-            this.emit( 'statesincreased', this.numStates, numStates );
-            this.numStates = numStates;
-        }
-    },
-    addState: function() {
-        this.increaseStatesTo( this.numStates + 1 );
+        ++this.numStates;
+        this.emit( 'stateadded', state );
+
         return this.numStates;
     },
     addAcceptingState: function( state ) {
-        this.increaseStatesTo( state );
+        assert( typeof this.states[ state ] != 'undefined' );
         this.accept[ state ] = true;
     },
+    deleteState: function( state ) {
+        this.emit( 'beforestatedeleted', state );
+        for ( from in this.transitions ) {
+            for ( via in this.transitions[ from ] ) {
+                var to = this.transitions[ from ][ via ];
+                if ( to == state ) {
+                    // fix transitions that were going to the
+                    // delete state to point to self-transitions
+                    this.transitions[ from ][ via ] = from;
+                }
+            }
+        }
+        delete this.transitions[ state ];
+        delete this.states[ state ];
+        this.emit( 'statedeleted', state );
+        --this.numStates;
+
+        return this.numStates;
+    },
     removeAcceptingState: function( state ) {
-        this.increaseStatesTo( state );
+        assert( typeof this.states[ state ] != 'undefined' );
         this.accept[ state ] = false;
     },
     reset: function() {
-        assert( this.numStates );
+        assert( this.numStates > 0 );
+        assert( typeof this.states[ this.startState ] != 'undefined' );
         this.currentState = this.startState;
     },
     run: function( input ) {

@@ -20,6 +20,7 @@
         <script src='js/eventemitter.js'></script>
         <script src='js/automaton.js'></script>
         <script src='js/render.js'></script>
+        <script src='js/editor.js'></script>
         <script src='js/test.js'></script>
     </body>
 </html>
