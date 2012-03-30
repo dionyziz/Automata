@@ -1,9 +1,10 @@
-var dfa = new DFA( [ 'a', 'b', 'c' ] );
+var dfa = new DFA( [ 'a', 'b' ] );
 var dfaview = new DFAView( dfa );
 
 dfa.addState( 'p' );
 dfa.addState( 'q' );
 dfa.addState( 't' );
+dfa.addTransition( 's', 'b', 's' );
 dfa.addTransition( 's', 'a', 'p' );
 dfa.addTransition( 'p', 'b', 'q' );
 dfa.addTransition( 'q', 'a', 't' );

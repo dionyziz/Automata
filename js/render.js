@@ -126,12 +126,7 @@ Renderer.prototype = {
         for ( var state in dfa.states ) {
             var j = 0;
             for ( var sigma in dfa.alphabet ) {
-                if ( typeof dfa.transitions[ state ][ sigma ] != 'undefined' ) {
-                    this.renderTransition( state, sigma, dfa.transitions[ state ][ sigma ] );
-                }
-                else {
-                    this.renderTransition( state, sigma, null, j / alphabetsize );
-                }
+                this.renderTransition( state, sigma, dfa.transitions[ state ][ sigma ], j / alphabetsize );
                 ++j;
             }
             stateArray.push( this.dfaview.states[ state ] );
@@ -244,18 +239,20 @@ Renderer.prototype = {
         ctx.save();
 
         from = this.dfaview.states[ from ];
-        if ( to != 0 ) {
-            to = this.dfaview.states[ to ];
-            angle = Math.atan2( from.position.y - to.position.y, from.position.x - to.position.x );
+        to = this.dfaview.states[ to ];
+        if ( to.state == from.state ) {
+            console.log( angle );
+            angle *= 2 * Math.PI;
         }
         else {
-            angle *= 2 * Math.PI;
+            angle = Math.atan2( from.position.y - to.position.y, from.position.x - to.position.x );
         }
         var start = {
             x: from.position.x - this.STATE_RADIUS * Math.cos( angle ),
             y: from.position.y - this.STATE_RADIUS * Math.sin( angle )
         };
-        if ( to == 0 ) { // no 'to' state is defined
+        if ( to.state == from.state ) { // no 'to' state is defined
+            to = false;
             var center = {
                 x: start.x - ( 2 / 4 ) * this.SELF_TRANSITION_RADIUS * Math.cos( angle ),
                 y: start.y - ( 2 / 4 ) * this.SELF_TRANSITION_RADIUS * Math.sin( angle )
