@@ -28,6 +28,8 @@ DFA.prototype = {
         assert( typeof this.states[ from ] != 'undefined' );
         assert( typeof this.states[ to ] != 'undefined' );
         this.transitions[ from ][ via ] = to;
+
+        this.emit( 'transitionadded', from, via, to );
     },
     addState: function( state ) {
         this.states[ state ] = true;

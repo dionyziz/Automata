@@ -9,7 +9,6 @@ function DFAView( dfa ) {
     // strokeColor: '#000'
     this.dfa = dfa;
     function stateAdded( state ) {
-        // console.log( 'View observed that states increased from ' + oldStates + ' to ' + newStates );
         self.states[ state ] = {
             position: {
                 x: 0,
@@ -25,7 +24,8 @@ function DFAView( dfa ) {
                 position: {
                     x: 0,
                     y: 0
-                }
+                },
+                importance: 'normal'
             };
         }
     }
@@ -36,6 +36,15 @@ function DFAView( dfa ) {
     this.dfa.on( 'statedeleted', function( state ) {
         delete self.states[ state ];
         delete self.transitions[ state ];
+    } );
+    this.dfa.on( 'transitionadded', function( from, via, to ) {
+        self.transitions[ from ][ via ] = {
+            position: {
+                x: 0,
+                y: 0
+            },
+            importance: 'normal'
+        };
     } );
 }
 function Renderer( canvas, dfaview ) {
@@ -191,7 +200,6 @@ Renderer.prototype = {
         ctx.rotate( theta );
         ctx.save();
         ctx.lineTo( 0, 0 );
-        ctx.strokeStyle = 'black';
         ctx.stroke();
 
         this.renderArrowEnd();
@@ -216,7 +224,6 @@ Renderer.prototype = {
         ctx.restore();
         ctx.save();
         ctx.rotate( Math.PI / 2 );
-        ctx.fillStyle = 'black';
         ctx.fill();
         ctx.closePath();
         ctx.restore();
@@ -235,13 +242,28 @@ Renderer.prototype = {
         ctx.restore();
     },
     renderTransition: function( from, via, to, angle ) {
+        var strokeStyle = 'black';
         var ctx = this.ctx;
+        var transitionView = this.dfaview.transitions[ from ][ via ];
+
+        switch ( transitionView.importance ) {
+            case 'normal':
+                break;
+            case 'strong': // used for selection in the editor
+                // TODO
+                break;
+            case 'emphasis': // used for mouseover in the editor
+                strokeStyle = 'red';
+                // TODO
+                break;
+        }
         ctx.save();
+        ctx.strokeStyle = strokeStyle;
+        ctx.fillStyle = strokeStyle;
 
         from = this.dfaview.states[ from ];
         to = this.dfaview.states[ to ];
         if ( to.state == from.state ) {
-            console.log( angle );
             angle *= 2 * Math.PI;
         }
         else {
@@ -259,7 +281,6 @@ Renderer.prototype = {
             };
             ctx.beginPath();
             ctx.arc( center.x, center.y, this.SELF_TRANSITION_RADIUS, 0, 2 * Math.PI, false );
-            ctx.strokeStyle = 'black';
             ctx.stroke();
             /*
              * We need to determine the two points of intersection of the two circles

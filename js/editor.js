@@ -8,23 +8,52 @@ Editor.prototype = {
     constructor: 'Editor',
     dragging: false,
     maxz: 1,
-    selectedState: false,
+    selectedElement: false,
     mainLoop: function() {
         this.renderer.render();
         setTimeout( this.mainLoop.bind( this ), 17 );
     },
-    stateSelected: function( state ) {
-        if ( state != this.selectedState ) {
-            this.dfaview.states[ state ].importance = 'strong';
-            if ( this.selectedState != false ) {
-                this.stateDeselected( this.selectedState );
+    elementSelected: function( element ) {
+        var oldtype = this.selectedElement[ 0 ];
+        var oldid = this.selectedElement[ 1 ];
+        var type = element[ 0 ];
+        var id = element[ 1 ];
+
+        if ( oldtype != type || id != oldid ) {
+            switch ( type ) {
+                case 'state':
+                    this.dfaview.states[ id ].importance = 'strong';
+                    break;
+                case 'transition':
+                    // TODO
+                    break;
             }
-            this.selectedState = state;
+            if ( this.selectedElement != false ) {
+                this.elementDeselected();
+            }
+            this.selectedElement = element;
         }
     },
-    stateDeselected: function() {
-        this.dfaview.states[ this.selectedState ].importance = 'normal';
-        this.selectedState = false;
+    elementDeselected: function() {
+        var type = this.selectedElement[ 0 ];
+        var id = this.selectedElement[ 1 ];
+
+        switch ( type ) {
+            case 'state':
+                this.dfaview.states[ id ].importance = 'normal';
+                break;
+            case 'transition':
+                // TODO
+                break;
+        }
+        this.selectedElement = false;
+    },
+    isStateSelected: function( state ) {
+        var ret = 
+            this.selectedElement != false
+         && this.selectedElement[ 0 ] == 'state'
+         && this.selectedElement[ 1 ] == state;
+        return ret;
     },
     play: function() {
         var dfa = this.dfa;
@@ -33,19 +62,20 @@ Editor.prototype = {
         var self = this;
 
         dfa.on( 'statedeleted', function( state ) {
-            if ( self.selectedState == state ) {
-                self.selectedState = 0;
+            if (    self.selectedElement[ 0 ] == 'state'
+                 && self.selectedElement[ 1 ] == state ) {
+                self.selectedElement = false;
             }
         } );
 
         renderer.on( 'mouseoverstate', function( state ) {
-            if ( !self.dragging && self.selectedState != state ) {
+            if ( !self.dragging && !self.isStateSelected( state ) ) {
                 dfaview.states[ state ].importance = 'emphasis';
             }
             canvas.style.cursor = 'pointer';
         } );
         function stateOut( state ) {
-            if ( state != self.selectedState ) {
+            if ( !self.isStateSelected( state ) ) {
                 dfaview.states[ state ].importance = 'normal';
             }
             canvas.style.cursor = 'default';
@@ -85,10 +115,10 @@ Editor.prototype = {
             renderer.once( 'mouseup', up );
             renderer.removeListener( 'mouseoutstate', stateOut );
 
-            self.stateSelected( state );
+            self.elementSelected( [ 'state', state ] );
         } );
         renderer.on( 'mousedownvoid', function( e ) {
-            self.stateDeselected();
+            self.elementDeselected();
         } );
         renderer.on( 'dblclick', function( e ) {
             var newState = dfaview.dfa.numStates + 1;
@@ -101,8 +131,16 @@ Editor.prototype = {
         document.onkeydown = function( e ) {
             switch ( e.keyCode ) {
                 case 46: // delete
-                    if ( self.selectedState != 0 ) {
-                        dfa.deleteState( self.selectedState );
+                    if ( self.selectedElement == false ) {
+                        return;
+                    }
+                    switch ( self.selectedElement[ 0 ] ) {
+                        case 'state':
+                            dfa.deleteState( self.selectedElement[ 1 ] );
+                            break;
+                        case 'transition':
+                            // TODO
+                            break;
                     }
                     break;
             }

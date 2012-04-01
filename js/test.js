@@ -21,6 +21,7 @@ dfaview.states[ 'q' ].position = {
 dfaview.states[ 't' ].position = {
     x: 100, y: 400
 };
+dfaview.transitions[ 'p' ][ 'b' ].importance = 'emphasis';
 
 var canvas = document.getElementsByTagName( 'canvas' )[ 0 ];
 var editor = new Editor( canvas, dfaview );
