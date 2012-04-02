@@ -25,7 +25,8 @@ function DFAView( dfa ) {
                     x: 0,
                     y: 0
                 },
-                importance: 'normal'
+                importance: 'normal',
+                detached: false
             };
         }
     }
@@ -43,7 +44,8 @@ function DFAView( dfa ) {
                 x: 0,
                 y: 0
             },
-            importance: 'normal'
+            importance: 'normal',
+            detached: false
         };
     } );
 }
@@ -246,20 +248,20 @@ Renderer.prototype = {
         var ctx = this.ctx;
         var transitionView = this.dfaview.transitions[ from ][ via ];
 
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = 'black';
         switch ( transitionView.importance ) {
             case 'normal':
                 break;
             case 'strong': // used for selection in the editor
-                // TODO
+                ctx.fillStyle = ctx.strokeStyle = '#3297fd';
                 break;
             case 'emphasis': // used for mouseover in the editor
-                strokeStyle = 'red';
-                // TODO
+                ctx.shadowColor = '#7985b1';
+                ctx.shadowBlur = 15;
+                // ctx.strokeStyle = 'red';
                 break;
         }
-        ctx.save();
-        ctx.strokeStyle = strokeStyle;
-        ctx.fillStyle = strokeStyle;
 
         from = this.dfaview.states[ from ];
         to = this.dfaview.states[ to ];
@@ -364,20 +366,11 @@ Renderer.prototype = {
         for ( var state in this.dfaview.states ) {
             var j = 0;
             for ( var sigma in dfa.alphabet ) {
-                if ( typeof dfa.transitions[ state ][ sigma ] != 'undefined' ) {
-                    test = this.hitTestTransition(
-                        x, y, dfaview.states[ state ].position, sigma, dfaview.states[ dfa.transitions[ state ][ sigma ] ].position
-                    );
-                    if ( test ) {
-                        return [ 'transition', [ state, sigma ] ];
-                    }
-                }
-                else {
-                    /*
-                    this.hitTestTransition(
-                        x, y, dfaview.states[ i ].position, sigma, 0, j / alphabetsize
-                    );
-                    */
+                test = this.hitTestTransition(
+                    x, y, dfaview.states[ state ].position, sigma, dfaview.states[ dfa.transitions[ state ][ sigma ] ].position
+                );
+                if ( test ) {
+                    return [ 'transition', [ state, sigma ] ];
                 }
                 ++j;
             }
@@ -393,6 +386,10 @@ Renderer.prototype = {
         }
     },
     hitTestTransition: function( x, y, from, via, to, percentage ) {
+        if ( from == to ) {
+            // TODO: hit test circular transitions
+            return false;
+        }
         var theta = Math.atan2( to.y - from.y, to.x - from.x );
 
         var arrowheadx = to.x - this.STATE_RADIUS * Math.cos( theta );

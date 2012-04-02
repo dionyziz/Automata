@@ -1,3 +1,21 @@
+function same( a, b ) {
+    if ( typeof a != typeof b ) {
+        return false;
+    }
+    if ( a instanceof Array ) {
+        if ( a.length != b.length ) {
+            return false;
+        }
+        for ( var i = 0; i < a.length; ++i ) {
+            if ( !same( a[ i ], b[ i ] ) ) {
+                return false;
+            }
+        }
+        return true;
+    }
+    return a == b;
+}
+
 Object.defineProperty( Function.prototype, "extend", {
     /**
      * @this {Function}

@@ -25,7 +25,7 @@ Editor.prototype = {
                     this.dfaview.states[ id ].importance = 'strong';
                     break;
                 case 'transition':
-                    // TODO
+                    this.dfaview.transitions[ id[ 0 ] ][ id[ 1 ] ].importance = 'strong';
                     break;
             }
             if ( this.selectedElement != false ) {
@@ -43,7 +43,7 @@ Editor.prototype = {
                 this.dfaview.states[ id ].importance = 'normal';
                 break;
             case 'transition':
-                // TODO
+                this.dfaview.transitions[ id[ 0 ] ][ id[ 1 ] ].importance = 'normal';
                 break;
         }
         this.selectedElement = false;
@@ -53,6 +53,13 @@ Editor.prototype = {
             this.selectedElement != false
          && this.selectedElement[ 0 ] == 'state'
          && this.selectedElement[ 1 ] == state;
+        return ret;
+    },
+    isTransitionSelected: function( transition ) {
+        var ret =
+            this.selectedElement != false
+         && this.selectedElement[ 0 ] == 'transition'
+         && same( this.selectedElement[ 1 ], transition )
         return ret;
     },
     play: function() {
@@ -67,7 +74,6 @@ Editor.prototype = {
                 self.selectedElement = false;
             }
         } );
-
         renderer.on( 'mouseoverstate', function( state ) {
             if ( !self.dragging && !self.isStateSelected( state ) ) {
                 dfaview.states[ state ].importance = 'emphasis';
@@ -75,17 +81,26 @@ Editor.prototype = {
             canvas.style.cursor = 'pointer';
         } );
         function stateOut( state ) {
+            console.log( 'State out ' + state );
             if ( !self.isStateSelected( state ) ) {
                 dfaview.states[ state ].importance = 'normal';
             }
             canvas.style.cursor = 'default';
         }
         renderer.on( 'mouseovertransition', function( transition ) {
+            if ( !self.isTransitionSelected( transition ) ) {
+                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].importance = 'emphasis';
+            }
             canvas.style.cursor = 'pointer';
         } );
-        renderer.on( 'mouseouttransition', function( transition ) {
+        function transitionOut( transition ) {
+            console.log( 'Transition out ' + transition[ 0 ] + ' (' + transition[ 1 ] + ')' );
+            if ( !self.isTransitionSelected( transition ) ) {
+                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].importance = 'normal';
+            }
             canvas.style.cursor = 'default';
-        } );
+        }
+        renderer.on( 'mouseouttransition', transitionOut );
         renderer.on( 'mouseoutstate', stateOut );
         renderer.on( 'mousedownstate', function( state, e ) {
             var x = e.clientX;
@@ -109,13 +124,50 @@ Editor.prototype = {
             function up( e ) {
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
+                renderer.on( 'mouseouttransition', transitionOut );
                 self.dragging = false;
             }
             renderer.on( 'mousemove', move );
             renderer.once( 'mouseup', up );
             renderer.removeListener( 'mouseoutstate', stateOut );
+            renderer.removeListener( 'mouseouttransition', transitionOut );
 
             self.elementSelected( [ 'state', state ] );
+        } );
+        renderer.on( 'mousedowntransition', function( transition, e ) {
+            var x = e.clientX;
+            var y = e.clientY;
+            var sx = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].position.x;
+            var sy = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].position.y;
+            var previous = dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ];
+
+            self.dragging = true;
+
+            dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].zindex = self.maxz++;
+
+            function move( e ) {
+                var dx = e.clientX - x;
+                var dy = e.clientY - y;
+
+                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].position = {
+                    x: sx + dx,
+                    y: sy + dy
+                };
+                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].detached = true;
+            }
+            function up( e ) {
+                renderer.removeListener( 'mousemove', move );
+                renderer.on( 'mouseoutstate', stateOut );
+                renderer.on( 'mouseouttransition', transitionOut );
+                self.dragging = false;
+                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].detached = false;
+            }
+            renderer.on( 'mousemove', move );
+            renderer.once( 'mouseup', up );
+            renderer.removeListener( 'mouseoutstate', stateOut );
+            renderer.removeListener( 'mouseouttransition', transitionOut );
+
+            self.elementSelected( [ 'transition', transition ] );
         } );
         renderer.on( 'mousedownvoid', function( e ) {
             self.elementDeselected();
