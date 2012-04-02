@@ -88,7 +88,7 @@ Editor.prototype = {
             canvas.style.cursor = 'default';
         }
         renderer.on( 'mouseovertransition', function( transition ) {
-            if ( !self.isTransitionSelected( transition ) ) {
+            if ( !self.dragging && !self.isTransitionSelected( transition ) ) {
                 dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].importance = 'emphasis';
             }
             canvas.style.cursor = 'pointer';
@@ -103,29 +103,24 @@ Editor.prototype = {
         renderer.on( 'mouseouttransition', transitionOut );
         renderer.on( 'mouseoutstate', stateOut );
         renderer.on( 'mousedownstate', function( state, e ) {
-            var x = e.clientX;
-            var y = e.clientY;
-            var sx = dfaview.states[ state ].position.x;
-            var sy = dfaview.states[ state ].position.y;
+            var client = new Vector( e.clientX, e.clientY );
+            var s = dfaview.states[ state ].position;
 
             self.dragging = true;
 
             dfaview.states[ state ].zindex = self.maxz++;
 
             function move( e ) {
-                var dx = e.clientX - x;
-                var dy = e.clientY - y;
-
-                dfaview.states[ state ].position = {
-                    x: sx + dx,
-                    y: sy + dy
-                };
+                var newClient = new Vector( e.clientX, e.clientY );
+                var d = newClient.minus( client );
+                dfaview.states[ state ].position = s.plus( d );
             }
             function up( e ) {
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
                 self.dragging = false;
+                canvas.style.cursor = 'default';
             }
             renderer.on( 'mousemove', move );
             renderer.once( 'mouseup', up );
@@ -135,32 +130,28 @@ Editor.prototype = {
             self.elementSelected( [ 'state', state ] );
         } );
         renderer.on( 'mousedowntransition', function( transition, e ) {
-            var x = e.clientX;
-            var y = e.clientY;
-            var sx = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].position.x;
-            var sy = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].position.y;
-            var previous = dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ];
+            var transitionView = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ];
+            var client = new Vector( e.clientX, e.clientY );
+            var s = self.dfaview.states[ self.dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] ].position;
 
             self.dragging = true;
 
-            dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].zindex = self.maxz++;
+            transitionView.zindex = self.maxz++;
 
             function move( e ) {
-                var dx = e.clientX - x;
-                var dy = e.clientY - y;
+                var oldClient = new Vector( e.clientX, e.clientY )
+                var d = oldClient.minus( client );
 
-                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].position = {
-                    x: sx + dx,
-                    y: sy + dy
-                };
-                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].detached = true;
+                transitionView.position = s.plus( d );
+                transitionView.detached = true;
             }
             function up( e ) {
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
                 self.dragging = false;
-                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].detached = false;
+                transitionView.detached = false;
+                canvas.style.cursor = 'default';
             }
             renderer.on( 'mousemove', move );
             renderer.once( 'mouseup', up );
@@ -175,10 +166,10 @@ Editor.prototype = {
         renderer.on( 'dblclick', function( e ) {
             var newState = dfaview.dfa.numStates + 1;
 
-            dfaview.states[ dfaview.dfa.addState( newState ) ].position = {
-                x: e.clientX - this.offsetLeft,
-                y: e.clientY - this.offsetTop
-            };
+            dfaview.states[ dfaview.dfa.addState( newState ) ].position = new Vector(
+                e.clientX - this.offsetLeft,
+                e.clientY - this.offsetTop
+            );
         } );
         document.onkeydown = function( e ) {
             switch ( e.keyCode ) {

@@ -4,16 +4,10 @@ function DFAView( dfa ) {
     this.states = {};
     this.transitions = {};
     // state object:
-    // position: { x: 10, y: 10 },
-    // fillColor: '#fff',
-    // strokeColor: '#000'
     this.dfa = dfa;
     function stateAdded( state ) {
         self.states[ state ] = {
-            position: {
-                x: 0,
-                y: 0
-            },
+            position: new Vector( 0, 0 ),
             importance: 'normal',
             zindex: 0,
             state: state
@@ -21,10 +15,7 @@ function DFAView( dfa ) {
         self.transitions[ state ] = {};
         for ( var sigma in dfa.alphabet ) {
             self.transitions[ state ][ sigma ] = {
-                position: {
-                    x: 0,
-                    y: 0
-                },
+                position: new Vector( 0, 0 ),
                 importance: 'normal',
                 detached: false
             };
@@ -40,10 +31,7 @@ function DFAView( dfa ) {
     } );
     this.dfa.on( 'transitionadded', function( from, via, to ) {
         self.transitions[ from ][ via ] = {
-            position: {
-                x: 0,
-                y: 0
-            },
+            position: new Vector( 0, 0 ),
             importance: 'normal',
             detached: false
         };
@@ -90,7 +78,7 @@ function Renderer( canvas, dfaview ) {
         var x = e.clientX - this.offsetLeft;
         var y = e.clientY - this.offsetTop;
 
-        test = self.hitTest( x, y );
+        test = self.hitTest( new Vector( x, y ) );
         if ( test[ 0 ] != self.mouseOverElement[ 0 ]
           && test[ 1 ] != self.mouseOverElement[ 1 ] ) {
             if ( self.mouseOverElement != false ) {
@@ -181,7 +169,7 @@ Renderer.prototype = {
                 break;
         }
 
-        // TODO: Dislpay state name
+        // TODO: Display state name
         ctx.translate( position.x, position.y );
         ctx.beginPath();
         ctx.arc( 0, 0, this.STATE_RADIUS, 0, 2 * Math.PI, true );
@@ -243,10 +231,18 @@ Renderer.prototype = {
         ctx.fillText( text, location.x - dim.width, location.y + dim.width / 2 );
         ctx.restore();
     },
+    moveAtAngle: function( location, radius, angle ) {
+        return {
+            x: location.x + radius * Math.cos( angle ),
+            y: location.y + radius * Math.sin( angle )
+        };
+    },
     renderTransition: function( from, via, to, angle ) {
         var strokeStyle = 'black';
         var ctx = this.ctx;
         var transitionView = this.dfaview.transitions[ from ][ via ];
+        var start, end, target;
+        var circular = false;
 
         ctx.save();
         ctx.fillStyle = ctx.strokeStyle = 'black';
@@ -264,23 +260,26 @@ Renderer.prototype = {
         }
 
         from = this.dfaview.states[ from ];
-        to = this.dfaview.states[ to ];
-        if ( to.state == from.state ) {
+        if ( transitionView.detached ) {
+            target = transitionView.position;
+        }
+        else {
+            to = this.dfaview.states[ to ];
+            target = to.position;
+            circular = to.state == from.state;
+        }
+        if ( circular ) {
+            // TODO: devise a deterministic algorithm for aligning transitions
+            // so that they do not overlap
             angle *= 2 * Math.PI;
         }
         else {
-            angle = Math.atan2( from.position.y - to.position.y, from.position.x - to.position.x );
+            angle = from.position.minus( target ).theta();
         }
-        var start = {
-            x: from.position.x - this.STATE_RADIUS * Math.cos( angle ),
-            y: from.position.y - this.STATE_RADIUS * Math.sin( angle )
-        };
-        if ( to.state == from.state ) { // no 'to' state is defined
-            to = false;
-            var center = {
-                x: start.x - ( 2 / 4 ) * this.SELF_TRANSITION_RADIUS * Math.cos( angle ),
-                y: start.y - ( 2 / 4 ) * this.SELF_TRANSITION_RADIUS * Math.sin( angle )
-            };
+        var offset = Vector.fromPolar( this.STATE_RADIUS, angle );
+        start = from.position.minus( offset );
+        if ( circular ) {
+            var center = start.minus( Vector.fromPolar( ( 1 / 2 ) * this.SELF_TRANSITION_RADIUS, angle ) );
             ctx.beginPath();
             ctx.arc( center.x, center.y, this.SELF_TRANSITION_RADIUS, 0, 2 * Math.PI, false );
             ctx.stroke();
@@ -305,25 +304,21 @@ Renderer.prototype = {
              *       to the line that connects the two centers
              *       http://www.wolframalpha.com/input/?i=solve+for+d1%2C+d2%2C+h%3A+%7B+r1%5E2+%3D+h%5E2+%2B+d1%5E2%2C+r2%5E2+%3D+h%5E2+%2B+d2%5E2%2C+d1+%2B+d2+%3D+D+%7D
              */
-            var dx = from.position.x - center.x;
-            var dy = from.position.y - center.y;
-            var D = Math.sqrt( dx * dx + dy * dy );
+            var d = from.position.minus( center );
+            var D = d.length();
             var r1 = this.SELF_TRANSITION_RADIUS;
             var r2 = this.STATE_RADIUS;
             var d2 = ( D * D - r1 * r1 + r2 * r2 ) / ( 2 * D );
             var d1 = ( D * D - r2 * r2 + r1 * r1 ) / ( 2 * D );
             var k = D * D + r1 * r1 - r2 * r2;
             var h = Math.sqrt( r1 * r1 - k * k / ( 4 * D * D ) );
-            var intersect = {
-                x: center.x + d1 * Math.cos( angle ) - h * Math.sin( angle ),
-                y: center.y + d1 * Math.sin( angle ) + h * Math.cos( angle )
-            };
+            var intersect = center.plus( Vector.fromPolar( d1, angle ) ).plus( Vector.fromPolar( h, angle ).rotate( Math.PI / 2 ) );
 
             // the arrowtheta is evaluated at the intersection point
             // we need to subtract a small amount (Math.PI / 10) to make
             // it tangent at the point of the center of the arrow head, not at the point
             // where the arrow points to
-            var arrowtheta = Math.atan2( intersect.x - center.x, intersect.y - center.y ) - Math.PI / 8;
+            var arrowtheta = intersect.minus( center ).theta() - Math.PI / 8;
 
             ctx.save();
             ctx.translate( intersect.x, intersect.y );
@@ -331,34 +326,26 @@ Renderer.prototype = {
             this.renderArrowEnd();
             ctx.restore();
 
-            this.renderText( {
-                x: center.x - this.SELF_TRANSITION_RADIUS * Math.cos( angle ),
-                y: center.y - this.SELF_TRANSITION_RADIUS * Math.sin( angle )
-            }, via );
-
+            this.renderText(
+                center.minus( Vector.fromPolar( this.SELF_TRANSITION_RADIUS, angle ) ),
+                via
+            );
             return;
         }
-        var end = {
-            x: to.position.x + this.STATE_RADIUS * Math.cos( angle ),
-            y: to.position.y + this.STATE_RADIUS * Math.sin( angle )
-        };
-
+        end = target.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
         this.renderArrow( start, end );
-        this.renderText( {
-            x: ( start.x + end.x + this.ARROW_RADIUS * Math.cos( this.ARROW_ANGLE ) * Math.cos( angle ) ) / 2,
-            y: ( start.y + end.y + this.ARROW_RADIUS * Math.sin( this.ARROW_RADIUS ) * Math.sin( angle ) ) / 2
-        }, via );
+        this.renderText( start.plus( end ).scale( 1 / 2 ), via );
         
         ctx.restore();
     },
-    hitTest: function( x, y ) {
+    hitTest: function( mouse ) {
         // check if the user is hovering a state
         var dfaview = this.dfaview;
         var dfa = dfaview.dfa;
         var test = false;
 
         for ( var state in this.dfaview.states ) {
-            test = this.hitTestState( x, y, state, dfaview.states[ state ].position );
+            test = this.hitTestState( mouse, state, dfaview.states[ state ].position );
             if ( test ) {
                 return [ 'state', state ];
             }
@@ -367,7 +354,7 @@ Renderer.prototype = {
             var j = 0;
             for ( var sigma in dfa.alphabet ) {
                 test = this.hitTestTransition(
-                    x, y, dfaview.states[ state ].position, sigma, dfaview.states[ dfa.transitions[ state ][ sigma ] ].position
+                    mouse, dfaview.states[ state ].position, sigma, dfaview.states[ dfa.transitions[ state ][ sigma ] ].position
                 );
                 if ( test ) {
                     return [ 'transition', [ state, sigma ] ];
@@ -377,28 +364,22 @@ Renderer.prototype = {
         }
         return false;
     },
-    hitTestState: function( x, y, state, position ) {
-        var dx = x - position.x;
-        var dy = y - position.y;
+    hitTestState: function( mouse, state, position ) {
+        var d = mouse.minus( position );
 
-        if ( dx * dx + dy * dy < this.STATE_RADIUS * this.STATE_RADIUS ) {
-            return true;
-        }
+        return d.length() < this.STATE_RADIUS;
     },
-    hitTestTransition: function( x, y, from, via, to, percentage ) {
+    hitTestTransition: function( mouse, from, via, to, percentage ) {
         if ( from == to ) {
             // TODO: hit test circular transitions
             return false;
         }
-        var theta = Math.atan2( to.y - from.y, to.x - from.x );
+        var arrowhead = to.minus(
+            Vector.fromPolar( this.STATE_RADIUS, to.minus( from ).theta() )
+        );
+        var d = arrowhead.minus( mouse );
 
-        var arrowheadx = to.x - this.STATE_RADIUS * Math.cos( theta );
-        var arrowheady = to.y - this.STATE_RADIUS * Math.sin( theta );
-
-        var dx = arrowheadx - x;
-        var dy = arrowheady - y;
-
-        if ( dx * dx + dy * dy < this.ARROW_RADIUS * this.ARROW_RADIUS ) {
+        if ( d.length() < this.ARROW_RADIUS ) {
             return true;
         }
     }

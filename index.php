@@ -18,6 +18,7 @@
         <script src='js/debug.js'></script>
         <script src='js/object.js'></script>
         <script src='js/eventemitter.js'></script>
+        <script src='js/math.js'></script>
         <script src='js/automaton.js'></script>
         <script src='js/render.js'></script>
         <script src='js/editor.js'></script>
