@@ -39,16 +39,15 @@ function Renderer( canvas, dfaview ) {
         var y = e.clientY - self.offset.y;
 
         test = self.hitTest( new Vector( x, y ) );
-        if ( test[ 0 ] != self.mouseOverElement[ 0 ]
-          && test[ 1 ] != self.mouseOverElement[ 1 ] ) {
-            if ( self.mouseOverElement != false ) {
+        if ( !same( test, self.mouseOverElement ) ) {
+            if ( self.mouseOverElement !== false ) {
                 mouseOut( self.mouseOverElement, e );
             }
-            if ( test != false ) {
+            if ( test !== false ) {
                 mouseOver( test, e );
             }
         }
-        if ( test != false ) {
+        if ( test !== false ) {
             mouseMove( test, e );
         }
         self.mouseOverElement = test;
@@ -84,18 +83,19 @@ Renderer.prototype = {
         }
         for ( var state in dfa.states ) {
             var j = 0;
-            for ( var sigma in dfa.alphabet ) {
-                this.renderTransition( state, sigma, dfa.transitions[ state ][ sigma ], j / alphabetsize );
-                ++j;
-            }
             stateArray.push( this.dfaview.states[ state ] );
         }
         stateArray.sort( function ( x, y ) {
             return x.zindex - y.zindex;
         } );
         for ( var i = 0; i < dfa.numStates; ++i ) {
+            var state = stateArray[ i ].state;
+            for ( var sigma in dfa.alphabet ) {
+                this.renderTransition( state, sigma, dfa.transitions[ state ][ sigma ], j / alphabetsize );
+                ++j;
+            }
             this.renderState(
-                stateArray[ i ].state, stateArray[ i ].position,
+                state, stateArray[ i ].position,
                 stateArray[ i ].importance,
                 dfa.accept[ stateArray[ i ].state ]
             );

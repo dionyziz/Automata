@@ -93,7 +93,6 @@ Editor.prototype = {
             canvas.style.cursor = 'pointer';
         } );
         function transitionOut( transition ) {
-            console.log( 'Transition out ' + transition[ 0 ] + ' (' + transition[ 1 ] + ')' );
             if ( !self.isTransitionSelected( transition ) ) {
                 dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].importance = 'normal';
             }
@@ -138,7 +137,7 @@ Editor.prototype = {
 
             self.dragging = true;
 
-            transitionView.zindex = self.maxz++;
+            dfaview.states[ transition[ 0 ] ].zindex = self.maxz++;
 
             function move( e ) {
                 var client = new Vector( e.clientX, e.clientY )
@@ -147,7 +146,6 @@ Editor.prototype = {
                 transitionView.position = s.plus( d );
 
                 var test = renderer.hitTest( client.minus( renderer.offset ) );
-                console.log( test[ 0 ] + '/' + test[ 1 ] );
                 if ( test[ 0 ] == 'state' ) {
                     transitionView.detached = false;
                     dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] = test[ 1 ];
