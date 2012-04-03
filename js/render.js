@@ -1,42 +1,3 @@
-function DFAView( dfa ) {
-    var self = this;
-    // state -> state view object
-    this.states = {};
-    this.transitions = {};
-    // state object:
-    this.dfa = dfa;
-    function stateAdded( state ) {
-        self.states[ state ] = {
-            position: new Vector( 0, 0 ),
-            importance: 'normal',
-            zindex: 0,
-            state: state
-        };
-        self.transitions[ state ] = {};
-        for ( var sigma in dfa.alphabet ) {
-            self.transitions[ state ][ sigma ] = {
-                position: new Vector( 0, 0 ),
-                importance: 'normal',
-                detached: false
-            };
-        }
-    }
-    this.dfa.on( 'stateadded', stateAdded );
-    for ( var state in dfa.states ) {
-        stateAdded( state );
-    }
-    this.dfa.on( 'statedeleted', function( state ) {
-        delete self.states[ state ];
-        delete self.transitions[ state ];
-    } );
-    this.dfa.on( 'transitionadded', function( from, via, to ) {
-        self.transitions[ from ][ via ] = {
-            position: new Vector( 0, 0 ),
-            importance: 'normal',
-            detached: false
-        };
-    } );
-}
 function Renderer( canvas, dfaview ) {
     var self = this;
 
@@ -231,12 +192,6 @@ Renderer.prototype = {
         ctx.fillText( text, location.x - dim.width, location.y + dim.width / 2 );
         ctx.restore();
     },
-    moveAtAngle: function( location, radius, angle ) {
-        return {
-            x: location.x + radius * Math.cos( angle ),
-            y: location.y + radius * Math.sin( angle )
-        };
-    },
     renderTransition: function( from, via, to, angle ) {
         var strokeStyle = 'black';
         var ctx = this.ctx;
@@ -330,6 +285,7 @@ Renderer.prototype = {
                 center.minus( Vector.fromPolar( this.SELF_TRANSITION_RADIUS, angle ) ),
                 via
             );
+            ctx.restore();
             return;
         }
         end = target;
@@ -346,7 +302,11 @@ Renderer.prototype = {
         var dfaview = this.dfaview;
         var dfa = dfaview.dfa;
         var test = false;
+        var alphabetsize = 0;
 
+        for ( var sigma in dfa.alphabet ) {
+            ++alphabetsize;
+        }
         for ( var state in this.dfaview.states ) {
             test = this.hitTestState( mouse, state, dfaview.states[ state ].position );
             if ( test ) {
@@ -357,7 +317,11 @@ Renderer.prototype = {
             var j = 0;
             for ( var sigma in dfa.alphabet ) {
                 test = this.hitTestTransition(
-                    mouse, dfaview.states[ state ].position, sigma, dfaview.states[ dfa.transitions[ state ][ sigma ] ].position
+                    mouse,
+                    dfaview.states[ state ].position,
+                    sigma,
+                    dfaview.states[ dfa.transitions[ state ][ sigma ] ].position,
+                    j / alphabetsize
                 );
                 if ( test ) {
                     return [ 'transition', [ state, sigma ] ];
@@ -372,19 +336,33 @@ Renderer.prototype = {
 
         return d.length() < this.STATE_RADIUS;
     },
-    hitTestTransition: function( mouse, from, via, to, percentage ) {
+    hitTestTransition: function( mouse, from, via, to, angle ) {
+        var arrowhead;
+
         if ( from == to ) {
-            // TODO: hit test circular transitions
-            return false;
+            angle *= 2 * Math.PI;
+            var offset = Vector.fromPolar( this.STATE_RADIUS, angle );
+            var start = from.minus( offset );
+            var center = start.minus( Vector.fromPolar( ( 1 / 2 ) * this.SELF_TRANSITION_RADIUS, angle ) );
+            var d = from.minus( center );
+            var D = d.length();
+            var r1 = this.SELF_TRANSITION_RADIUS;
+            var r2 = this.STATE_RADIUS;
+            var d2 = ( D * D - r1 * r1 + r2 * r2 ) / ( 2 * D );
+            var d1 = ( D * D - r2 * r2 + r1 * r1 ) / ( 2 * D );
+            var k = D * D + r1 * r1 - r2 * r2;
+            var h = Math.sqrt( r1 * r1 - k * k / ( 4 * D * D ) );
+            var intersect = center.plus( Vector.fromPolar( d1, angle ) ).plus( Vector.fromPolar( h, angle ).rotate( Math.PI / 2 ) );
+            arrowhead = intersect;
         }
-        var arrowhead = to.minus(
-            Vector.fromPolar( this.STATE_RADIUS, to.minus( from ).theta() )
-        );
+        else {
+            arrowhead = to.minus(
+                Vector.fromPolar( this.STATE_RADIUS, to.minus( from ).theta() )
+            );
+        }
         var d = arrowhead.minus( mouse );
 
-        if ( d.length() < this.ARROW_RADIUS ) {
-            return true;
-        }
+        return d.length() < this.ARROW_RADIUS;
     }
 };
 Renderer.extend( EventEmitter );

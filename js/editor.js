@@ -81,7 +81,6 @@ Editor.prototype = {
             canvas.style.cursor = 'pointer';
         } );
         function stateOut( state ) {
-            console.log( 'State out ' + state );
             if ( !self.isStateSelected( state ) ) {
                 dfaview.states[ state ].importance = 'normal';
             }
