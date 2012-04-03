@@ -145,7 +145,16 @@ Editor.prototype = {
                 var d = client.minus( oldClient );
 
                 transitionView.position = s.plus( d );
-                transitionView.detached = true;
+
+                var test = renderer.hitTest( client.minus( renderer.offset ) );
+                console.log( test[ 0 ] + '/' + test[ 1 ] );
+                if ( test[ 0 ] == 'state' ) {
+                    transitionView.detached = false;
+                    dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] = test[ 1 ];
+                }
+                else {
+                    transitionView.detached = true;
+                }
             }
             function up( e ) {
                 renderer.removeListener( 'mousemove', move );
@@ -169,8 +178,8 @@ Editor.prototype = {
             var newState = dfaview.dfa.numStates + 1;
 
             dfaview.states[ dfaview.dfa.addState( newState ) ].position = new Vector(
-                e.clientX - this.offsetLeft,
-                e.clientY - this.offsetTop
+                e.clientX - this.offset.x,
+                e.clientY - this.offset.y
             );
         } );
         document.onkeydown = function( e ) {

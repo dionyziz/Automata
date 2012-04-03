@@ -5,8 +5,7 @@ function Renderer( canvas, dfaview ) {
     this.ctx = this.canvas.getContext( '2d' );
     this.dfaview = dfaview;
     this.mouseOverElement = [];
-    this.offsetLeft = canvas.offsetLeft;
-    this.offsetTop = canvas.offsetTop;
+    this.offset = new Vector( canvas.offsetLeft, canvas.offsetTop );
 
     function mouseOut( element, e ) {
         self.emit( 'mouseout' + element[ 0 ], element[ 1 ], e );
@@ -36,8 +35,8 @@ function Renderer( canvas, dfaview ) {
     propagateEvent( 'dblclick' );
 
     function handleMouseMotion( e ) {
-        var x = e.clientX - this.offsetLeft;
-        var y = e.clientY - this.offsetTop;
+        var x = e.clientX - self.offset.x;
+        var y = e.clientY - self.offset.y;
 
         test = self.hitTest( new Vector( x, y ) );
         if ( test[ 0 ] != self.mouseOverElement[ 0 ]
