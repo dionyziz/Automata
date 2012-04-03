@@ -131,16 +131,19 @@ Editor.prototype = {
         } );
         renderer.on( 'mousedowntransition', function( transition, e ) {
             var transitionView = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ];
-            var client = new Vector( e.clientX, e.clientY );
-            var s = self.dfaview.states[ self.dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] ].position;
+            var oldClient = new Vector( e.clientX, e.clientY );
+            var from = self.dfaview.states[ transition[ 0 ] ].position;
+            var to = self.dfaview.states[ self.dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] ].position;
+            var angle = from.minus( to ).theta();
+            var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
 
             self.dragging = true;
 
             transitionView.zindex = self.maxz++;
 
             function move( e ) {
-                var oldClient = new Vector( e.clientX, e.clientY )
-                var d = oldClient.minus( client );
+                var client = new Vector( e.clientX, e.clientY )
+                var d = client.minus( oldClient );
 
                 transitionView.position = s.plus( d );
                 transitionView.detached = true;

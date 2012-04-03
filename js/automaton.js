@@ -1,5 +1,4 @@
 function DFA( alphabet ) {
-    // each state is an int from 1 up to .numStates
     // flip alphabet
     this.alphabet = {};
     this.transitions = {

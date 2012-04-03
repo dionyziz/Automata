@@ -332,7 +332,10 @@ Renderer.prototype = {
             );
             return;
         }
-        end = target.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+        end = target;
+        if ( !transitionView.detached ) {
+            end = end.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+        }
         this.renderArrow( start, end );
         this.renderText( start.plus( end ).scale( 1 / 2 ), via );
         
