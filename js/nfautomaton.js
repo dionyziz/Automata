@@ -1,12 +1,16 @@
-function DFA( alphabet ) {
+function NFA( alphabet ) {
     // flip alphabet
-    this.alphabet = {};
+    this.alphabet = {
+        'ε': true
+    };
     this.transitions = {
-        s: {}
+        s: {
+           'ε': []
+        }
     };
     for ( var i = 0; i < alphabet.length; ++i ) {
         this.alphabet[ alphabet[ i ] ] = true;
-        this.transitions[ 's' ][ alphabet[ i ] ] = 's';
+        this.transitions[ 's' ][ alphabet[ i ] ] = [];
     }
     // array from state to dictionary from alphabet symbol to state
     this.numStates = 1;
@@ -20,21 +24,32 @@ function DFA( alphabet ) {
     EventEmitter.call( this );
 }
 
-DFA.prototype = {
-    constructor: DFA,
+NFA.prototype = {
+    constructor: NFA,
     addTransition: function( from, via, to ) {
         assert( typeof this.alphabet[ via ] != 'undefined' );
         assert( typeof this.states[ from ] != 'undefined' );
         assert( typeof this.states[ to ] != 'undefined' );
-        this.transitions[ from ][ via ] = to;
+        this.transitions[ from ][ via ].push(to);
 
         this.emit( 'transitionadded', from, via, to );
+    },
+    deleteTransition: function( from, via, to ) {
+        assert( typeof this.alphabet[ via ] != 'undefined' );
+        assert( typeof this.states[ from ] != 'undefined' );
+        assert( typeof this.states[ to ] != 'undefined' );
+        var idx = this.transitions[ from ][ via ].indexOf( to );
+        if ( idx != -1 ){
+            this.transitions[ from ][ via ].splice( idx, 1 );
+        }
+
+        this.emit( 'transitiondeleted', from, via, to );
     },
     addState: function( state ) {
         this.states[ state ] = true;
         this.transitions[ state ] = {};
         for ( var sigma in this.alphabet ) {
-            this.transitions[ state ][ sigma ] = state;
+            this.transitions[ state ][ sigma ] = [];
         }
         ++this.numStates;
         this.emit( 'stateadded', state );
@@ -50,10 +65,11 @@ DFA.prototype = {
         for ( from in this.transitions ) {
             for ( via in this.transitions[ from ] ) {
                 var to = this.transitions[ from ][ via ];
-                if ( to == state ) {
+                var idx = this.transitions[ from ][ via ].indexOf( state );
+                if ( idx != -1 ) {
                     // fix transitions that were going to the
                     // delete state to point to self-transitions
-                    this.transitions[ from ][ via ] = from;
+                    this.transitions[ from ][ via ].splice( idx, 1 );
                 }
             }
         }
@@ -71,25 +87,48 @@ DFA.prototype = {
     reset: function() {
         assert( this.numStates > 0 );
         assert( typeof this.states[ this.startState ] != 'undefined' );
-        this.currentState = this.startState;
+        this.currentStates = [ this.startState ];
     },
     run: function( input ) {
+        // To run the NFA do BFS to the tree that will be produced by NFA
         this.reset();
 
-        while ( input.length ) {
+        while (     input.length
+                &&  this.currentStates.length ) {
             this.next( input[ 0 ] );
             input = input.substr( 1 );
         }
 
-        return this.accept[ this.currentState ];
+        for ( finalstate in this.currentStates ) {
+            if ( this.accept[ finalstate ] ) {
+                return true;
+            }
+        }
+
+        return false;
     },
     next: function( symbol ) {
-        var nextState = this.transitions[ this.currentState ][ symbol ];
+        var nextLevelStates = [];
 
-        if ( typeof nextState == 'undefined' ) {
-            throw 'Undefined transition from state ' + this._currentState + ' via symbol ' + symbol;
+        for ( state in this.currentStates ){
+            if ( typeof this.transitions[ state ][ symbol ] == 'undefined' ) {
+                throw 'Undefined transition from state ' + state + ' via symbol ' + symbol;
+
+            nextLevelStates.concat( this.transitions[ state ][ symbol ] );
         }
-        this.currentState = nextState;
+
+        //Remove duplicate values from nextLevelStates
+        var i, obj = {}, outarr = [];
+
+        for ( i = 0; i < nextLevelStates.lenght; ++i ) {
+            obj[ nextLevelStates[ i ] ] = 0;
+        }
+
+        for ( i in obj ) {
+            outarr.push( i );
+        }
+
+        this.currentStates = outarr;
     }
 };
-DFA.extend( EventEmitter );
+NFA.extend( EventEmitter );

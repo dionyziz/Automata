@@ -49,7 +49,7 @@ Editor.prototype = {
         this.selectedElement = false;
     },
     isStateSelected: function( state ) {
-        var ret = 
+        var ret =
             this.selectedElement != false
          && this.selectedElement[ 0 ] == 'state'
          && this.selectedElement[ 1 ] == state;
