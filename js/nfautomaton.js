@@ -65,11 +65,11 @@ NFA.prototype = {
         for ( from in this.transitions ) {
             for ( via in this.transitions[ from ] ) {
                 var to = this.transitions[ from ][ via ];
-                var idx = this.transitions[ from ][ via ].indexOf( state );
+                var idx = to.indexOf( state );
                 if ( idx != -1 ) {
                     // fix transitions that were going to the
                     // delete state to point to self-transitions
-                    this.transitions[ from ][ via ].splice( idx, 1 );
+                    to.splice( idx, 1 );
                 }
             }
         }
