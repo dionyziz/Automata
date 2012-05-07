@@ -3,8 +3,19 @@ function NFAView( nfa ) {
     // state -> state view object
     this.states = {};
     this.transitions = {};
+    this.alphabet = {};
     // state object:
     this.nfa = nfa;
+    var j = 100;
+    for ( var symbol in nfa.alphabet ){
+        self.alphabet[ symbol ] = {
+            position: new Vector( j, 400 ),
+            importance: 'normal',
+            zindex: 0,
+            symbol: symbol,
+        };
+        j += 25;
+    }
     function stateAdded( state ) {
         self.states[ state ] = {
             position: new Vector( 0, 0 ),
@@ -13,12 +24,15 @@ function NFAView( nfa ) {
             state: state
         };
         self.transitions[ state ] = {};
-        for ( var sigma in dfa.alphabet ) {
-            self.transitions[ state ][ sigma ] = [ {
-                position: new Vector( 0, 0 ),
-                importance: 'normal',
-                detached: false
-            } ];
+        for ( var sigma in nfa.alphabet ) {
+            self.transitions[ state ][ sigma ] = {};
+            for ( var to in nfa.transitions[ state ][ sigma ] ) {
+                self.transitions[ state ][ sigma ][ to ] = [ {
+                    position: new Vector( 0, 0 ),
+                    importance: 'normal',
+                    detached: false
+                } ];
+            }
         }
     }
     this.nfa.on( 'stateadded', stateAdded );
@@ -30,12 +44,13 @@ function NFAView( nfa ) {
         delete self.transitions[ state ];
     } );
     this.nfa.on( 'transitionadded', function( from, via, to ) {
-        self.transitions[ from ][ via ].push( {
+        self.transitions[ from ][ via ][ to ] = {
             position: new Vector( 0, 0 ),
             importance: 'normal',
             detached: false
-        } );
+        };
     } );
     this.nfa.on( 'transitiondeleted', function( from, via, to ) {
+        self.transitions[ from ][ via ][ to ] = false;
     } );
 }
