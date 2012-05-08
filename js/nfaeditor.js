@@ -140,11 +140,6 @@ NFAEditor.prototype = {
                 self.elementSelected( [ 'state', state ] );
             }
             else{
-                var symbol = 'ε';
-                for ( var i in nfaview.nfa.alphabet ){
-                    symbol = i
-                }
-
                 renderer.showAlphabet = true;
                 self.stateToSelected = state;
             }
@@ -245,7 +240,7 @@ NFAEditor.prototype = {
         document.onkeyup = function( e ) {
             switch ( e.keyCode ) {
                 case 16: //shift
-                    if ( stateToSelected == false ) {
+                    if ( self.stateToSelected == false ) {
                         self.stateFromSelected = false;
                     }
             }
