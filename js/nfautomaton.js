@@ -118,6 +118,7 @@ NFA.prototype = {
                 throw 'Undefined transition from state ' + state + ' via symbol ' + symbol;
 
                 nextLevelStates.concat( this.transitions[ state ][ symbol ] );
+                nextLevelStates.concat( this.transitions[ state ][ 'ε' ] );
             }
         }
 

@@ -1,4 +1,4 @@
-var nfa = new NFA( [ 'a', 'b' ] );
+var nfa = new NFA( [ 'a', 'b', 'c', 'd' ] );
 var nfaview = new NFAView( nfa );
 
 nfa.addState( 'p' );
@@ -12,8 +12,8 @@ nfa.addTransition( 'q', 'a', 's' );
 nfa.addAcceptingState( 't' );
 nfaview.states[ 's' ].position = new Vector( 100, 100 );
 nfaview.states[ 'p' ].position = new Vector( 400, 100 );
-nfaview.states[ 'q' ].position = new Vector( 400, 400 );
-nfaview.states[ 't' ].position = new Vector( 100, 400 );
+nfaview.states[ 'q' ].position = new Vector( 400, 300 );
+nfaview.states[ 't' ].position = new Vector( 100, 300 );
 
 var canvas = document.getElementsByTagName( 'canvas' )[ 0 ];
 var editor = new NFAEditor( canvas, nfaview );

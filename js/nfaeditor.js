@@ -145,10 +145,8 @@ NFAEditor.prototype = {
                     symbol = i
                 }
 
-                // TODO fix to choose which symbol from aphabet
                 renderer.showAlphabet = true;
                 self.stateToSelected = state;
-                //nfaview.nfa.addTransition( self.stateFromSelected, 'a', self.stateToSelected );
             }
 
         } );
@@ -247,7 +245,9 @@ NFAEditor.prototype = {
         document.onkeyup = function( e ) {
             switch ( e.keyCode ) {
                 case 16: //shift
-                    //self.stateFromSelected = false;
+                    if ( stateToSelected == false ) {
+                        self.stateFromSelected = false;
+                    }
             }
         };
         this.mainLoop();

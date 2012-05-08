@@ -122,10 +122,10 @@ NFARenderer.prototype = {
         ctx.fillStyle = 'black';
         switch ( importance ) {
             case 'normal':
-                ctx.font = '12pt Verdana';
+                ctx.font = '16pt Verdana';
                 break;
             case 'emphasis':
-                ctx.font = '16pt Verdana';
+                ctx.font = '20pt Verdana';
                 ctx.shadowColor = '#7985b1';
                 ctx.shadowBlur = 15;
                 break;

@@ -6,7 +6,7 @@ function NFAView( nfa ) {
     this.alphabet = {};
     // state object:
     this.nfa = nfa;
-    var j = 100;
+    var j = 200;
     for ( var symbol in nfa.alphabet ){
         self.alphabet[ symbol ] = {
             position: new Vector( j, 400 ),
