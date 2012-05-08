@@ -1,14 +1,16 @@
-function Editor( canvas, dfaview ) {
+function NFAEditor( canvas, dfaview ) {
     this.canvas = canvas;
-    this.dfaview = dfaview;
-    this.dfa = dfaview.dfa;
-    this.renderer = new Renderer( this.canvas, this.dfaview );
+    this.nfaview = nfaview;
+    this.nfa = nfaview.nfa;
+    this.renderer = new NFARenderer( this.canvas, this.nfaview );
 }
-Editor.prototype = {
+NFAEditor.prototype = {
     constructor: 'Editor',
     dragging: false,
     maxz: 1,
     selectedElement: false,
+    stateFromSelected: false,
+    stateToSelected: false,
     mainLoop: function() {
         this.renderer.render();
         setTimeout( this.mainLoop.bind( this ), 17 );
@@ -22,10 +24,10 @@ Editor.prototype = {
         if ( oldtype != type || id != oldid ) {
             switch ( type ) {
                 case 'state':
-                    this.dfaview.states[ id ].importance = 'strong';
+                    this.nfaview.states[ id ].importance = 'strong';
                     break;
                 case 'transition':
-                    this.dfaview.transitions[ id[ 0 ] ][ id[ 1 ] ].importance = 'strong';
+                    this.nfaview.transitions[ id[ 0 ] ][ id[ 1 ] ][ id[ 2 ] ].importance = 'strong';
                     break;
             }
             if ( this.selectedElement != false ) {
@@ -40,10 +42,10 @@ Editor.prototype = {
 
         switch ( type ) {
             case 'state':
-                this.dfaview.states[ id ].importance = 'normal';
+                this.nfaview.states[ id ].importance = 'normal';
                 break;
             case 'transition':
-                this.dfaview.transitions[ id[ 0 ] ][ id[ 1 ] ].importance = 'normal';
+                this.nfaview.transitions[ id[ 0 ] ][ id[ 1 ] ][ id[ 2 ] ].importance = 'normal';
                 break;
         }
         this.selectedElement = false;
@@ -63,81 +65,110 @@ Editor.prototype = {
         return ret;
     },
     play: function() {
-        var dfa = this.dfa;
+        var nfa = this.nfa;
         var renderer = this.renderer;
         var canvas = this.canvas;
         var self = this;
 
-        dfa.on( 'statedeleted', function( state ) {
+        nfa.on( 'statedeleted', function( state ) {
             if (    self.selectedElement[ 0 ] == 'state'
                  && self.selectedElement[ 1 ] == state ) {
                 self.selectedElement = false;
             }
         } );
+        renderer.on( 'mouseoveralphabet', function( symbol ) {
+            nfaview.alphabet[ symbol ].importance = 'emphasis';
+            canvas.style.cursor = 'pointer';
+        } );
+        function alphabetOut( symbol ) {
+            nfaview.alphabet[ symbol ].importance = 'normal';
+            canvas.style.cursor = 'default';
+        }
         renderer.on( 'mouseoverstate', function( state ) {
             if ( !self.dragging && !self.isStateSelected( state ) ) {
-                dfaview.states[ state ].importance = 'emphasis';
+                nfaview.states[ state ].importance = 'emphasis';
             }
             canvas.style.cursor = 'pointer';
         } );
         function stateOut( state ) {
             if ( !self.isStateSelected( state ) ) {
-                dfaview.states[ state ].importance = 'normal';
+                nfaview.states[ state ].importance = 'normal';
             }
             canvas.style.cursor = 'default';
         }
         renderer.on( 'mouseovertransition', function( transition ) {
             if ( !self.dragging && !self.isTransitionSelected( transition ) ) {
-                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].importance = 'emphasis';
+                nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ].importance = 'emphasis';
             }
             canvas.style.cursor = 'pointer';
         } );
         function transitionOut( transition ) {
             if ( !self.isTransitionSelected( transition ) ) {
-                dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ].importance = 'normal';
+                nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ].importance = 'normal';
             }
             canvas.style.cursor = 'default';
         }
         renderer.on( 'mouseouttransition', transitionOut );
         renderer.on( 'mouseoutstate', stateOut );
+        renderer.on( 'mouseoutalphabet', alphabetOut );
         renderer.on( 'mousedownstate', function( state, e ) {
-            var client = new Vector( e.clientX, e.clientY );
-            var s = dfaview.states[ state ].position;
+            if ( self.stateFromSelected == false ){
+                var client = new Vector( e.clientX, e.clientY );
+                var s = nfaview.states[ state ].position;
 
-            self.dragging = true;
+                self.dragging = true;
 
-            dfaview.states[ state ].zindex = self.maxz++;
+                nfaview.states[ state ].zindex = self.maxz++;
 
-            function move( e ) {
-                var newClient = new Vector( e.clientX, e.clientY );
-                var d = newClient.minus( client );
-                dfaview.states[ state ].position = s.plus( d );
+                function move( e ) {
+                    var newClient = new Vector( e.clientX, e.clientY );
+                    var d = newClient.minus( client );
+                    nfaview.states[ state ].position = s.plus( d );
+                }
+                function up( e ) {
+                    renderer.removeListener( 'mousemove', move );
+                    renderer.on( 'mouseoutstate', stateOut );
+                    renderer.on( 'mouseouttransition', transitionOut );
+                    self.dragging = false;
+                    canvas.style.cursor = 'default';
+                }
+                renderer.on( 'mousemove', move );
+                renderer.once( 'mouseup', up );
+                renderer.removeListener( 'mouseoutstate', stateOut );
+                renderer.removeListener( 'mouseouttransition', transitionOut );
+
+                self.elementSelected( [ 'state', state ] );
             }
-            function up( e ) {
-                renderer.removeListener( 'mousemove', move );
-                renderer.on( 'mouseoutstate', stateOut );
-                renderer.on( 'mouseouttransition', transitionOut );
-                self.dragging = false;
-                canvas.style.cursor = 'default';
-            }
-            renderer.on( 'mousemove', move );
-            renderer.once( 'mouseup', up );
-            renderer.removeListener( 'mouseoutstate', stateOut );
-            renderer.removeListener( 'mouseouttransition', transitionOut );
+            else{
+                var symbol = 'ε';
+                for ( var i in nfaview.nfa.alphabet ){
+                    symbol = i
+                }
 
-            self.elementSelected( [ 'state', state ] );
+                renderer.showAlphabet = true;
+                self.stateToSelected = state;
+            }
+
+        } );
+        renderer.on( 'mouseupalphabet', function( symbol, e ) {
+            if ( renderer.showAlphabet == true ){
+                nfaview.nfa.addTransition( self.stateFromSelected, symbol, self.stateToSelected );
+                renderer.showAlphabet = false;
+                self.stateFromSelected = false;
+                self.stateToSelected = false;
+            }
         } );
         renderer.on( 'mousedowntransition', function( transition, e ) {
-            var transitionView = dfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ];
+            var transitionView = nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ];
             var oldClient = new Vector( e.clientX, e.clientY );
-            var from = self.dfaview.states[ transition[ 0 ] ].position;
-            var to = self.dfaview.states[ self.dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] ].position;
+            var from = self.nfaview.states[ transition[ 0 ] ].position;
+            var to = self.nfaview.states[ self.nfaview.nfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ] ].position;
             var angle = from.minus( to ).theta();
             var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
 
             self.dragging = true;
 
-            dfaview.states[ transition[ 0 ] ].zindex = self.maxz++;
+            nfaview.states[ transition[ 0 ] ].zindex = self.maxz++;
 
             function move( e ) {
                 var client = new Vector( e.clientX, e.clientY )
@@ -148,7 +179,10 @@ Editor.prototype = {
                 var test = renderer.hitTest( client.minus( renderer.offset ) );
                 if ( test[ 0 ] == 'state' ) {
                     transitionView.detached = false;
-                    dfaview.dfa.transitions[ transition[ 0 ] ][ transition[ 1 ] ] = test[ 1 ];
+                    nfaview.nfa.deleteTransition( transition[ 0 ], transition[ 1 ], transition[ 2 ] );
+                    nfaview.nfa.addTransition( transition[ 0 ], transition[ 1 ], test[ 1 ] );
+                    transition[ 2 ] = test[ 1 ];
+                    self.elementDeselected();
                 }
                 else {
                     transitionView.detached = true;
@@ -173,9 +207,9 @@ Editor.prototype = {
             self.elementDeselected();
         } );
         renderer.on( 'dblclick', function( e ) {
-            var newState = dfaview.dfa.numStates + 1;
+            var newState = nfaview.nfa.numStates + 1;
 
-            dfaview.states[ dfaview.dfa.addState( newState ) ].position = new Vector(
+            nfaview.states[ nfaview.nfa.addState( newState ) ].position = new Vector(
                 e.clientX - this.offset.x,
                 e.clientY - this.offset.y
             );
@@ -188,13 +222,32 @@ Editor.prototype = {
                     }
                     switch ( self.selectedElement[ 0 ] ) {
                         case 'state':
-                            dfa.deleteState( self.selectedElement[ 1 ] );
+                            nfa.deleteState( self.selectedElement[ 1 ] );
                             break;
                         case 'transition':
                             // TODO
+                            nfa.deleteTransition( self.selectedElement[ 1 ][ 0 ], self.selectedElement[ 1 ][ 1 ], self.selectedElement[ 1 ][ 2 ] );
                             break;
                     }
                     break;
+                case 16: //shift
+                    if ( self.selectedElement == false ){
+                        return;
+                    }
+                    if ( self.selectedElement[ 0 ] == 'state' ){
+                        if ( self.stateFromSelected == false ) {
+                            self.stateFromSelected = self.selectedElement[ 1 ];
+                        }
+                    }
+                    break;
+            }
+        };
+        document.onkeyup = function( e ) {
+            switch ( e.keyCode ) {
+                case 16: //shift
+                    if ( stateToSelected == false ) {
+                        self.stateFromSelected = false;
+                    }
             }
         };
         this.mainLoop();
