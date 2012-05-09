@@ -1,9 +1,9 @@
-function Renderer( canvas, dfaview ) {
+function NFARenderer( canvas, nfaview ) {
     var self = this;
 
     this.canvas = canvas;
     this.ctx = this.canvas.getContext( '2d' );
-    this.dfaview = dfaview;
+    this.nfaview = nfaview;
     this.mouseOverElement = [];
     this.offset = new Vector( canvas.offsetLeft, canvas.offsetTop );
 
@@ -53,7 +53,7 @@ function Renderer( canvas, dfaview ) {
         self.mouseOverElement = test;
         self.emit( 'mousemove', e );
     }
-    dfaview.dfa.on( 'beforestatedeleted', function( state ) {
+    nfaview.nfa.on( 'beforestatedeleted', function( state ) {
         if ( self.mouseOverElement[ 0 ] == 'state' ) {
             if ( self.mouseOverElement[ 1 ] == state ) {
                 mouseOut( self.mouseOverElement, false );
@@ -66,40 +66,75 @@ function Renderer( canvas, dfaview ) {
 
     EventEmitter.call( this );
 };
-Renderer.prototype = {
+NFARenderer.prototype = {
     STATE_RADIUS: 25,
     ARROW_RADIUS: 15,
+    ALPHABET_RADIUS: 15,
     ARROW_ANGLE: Math.PI / 6,
     SELF_TRANSITION_RADIUS: 20,
-    constructor: Renderer,
+    constructor: NFARenderer,
+    showAlphabet: false,
     render: function() {
         this.ctx.clearRect( 0, 0, 800, 800 );
-        var dfa = this.dfaview.dfa;
+        var nfa = this.nfaview.nfa;
         var alphabetsize = 0;
         var stateArray = [];
 
-        for ( var sigma in dfa.alphabet ) {
+        for ( var sigma in nfa.alphabet ) {
             ++alphabetsize;
         }
-        for ( var state in dfa.states ) {
+        for ( var state in nfa.states ) {
             var j = 0;
-            stateArray.push( this.dfaview.states[ state ] );
+            stateArray.push( this.nfaview.states[ state ] );
         }
         stateArray.sort( function ( x, y ) {
             return x.zindex - y.zindex;
         } );
-        for ( var i = 0; i < dfa.numStates; ++i ) {
+        for ( var i = 0; i < nfa.numStates; ++i ) {
             var state = stateArray[ i ].state;
-            for ( var sigma in dfa.alphabet ) {
-                this.renderTransition( state, sigma, dfa.transitions[ state ][ sigma ], j / alphabetsize );
-                ++j;
+            var outstatesnum = nfa.transitionsnum[ state ];
+
+            for ( var sigma in nfa.alphabet ) {
+                for ( var to in nfa.transitions[ state ][ sigma ] ) {
+                    this.renderTransition( state, sigma, to, j / outstatesnum );
+                    ++j;
+                }
             }
+
             this.renderState(
                 state, stateArray[ i ].position,
                 stateArray[ i ].importance,
-                dfa.accept[ stateArray[ i ].state ]
+                nfa.accept[ stateArray[ i ].state ]
             );
         }
+
+        if (this.showAlphabet){
+            for ( var symbol in nfa.alphabet ) {
+                this.renderAlphabet( nfaview.alphabet[ symbol ].symbol, nfaview.alphabet[ symbol ].position, nfaview.alphabet[ symbol ].importance );
+            }
+        }
+    },
+    renderAlphabet: function( symbol, position, importance ){
+        var ctx = this.ctx;
+        var dim = ctx.measureText( symbol );
+
+        ctx.save();
+        ctx.fillStyle = 'black';
+        switch ( importance ) {
+            case 'normal':
+                ctx.font = '16pt Verdana';
+                break;
+            case 'emphasis':
+                ctx.font = '20pt Verdana';
+                ctx.shadowColor = '#7985b1';
+                ctx.shadowBlur = 15;
+                break;
+        };
+        ctx.strokeStyle = 'white';
+        ctx.lineWidth = 6;
+        ctx.strokeText( symbol, position.x - dim.width, position.y + dim.width / 2 );
+        ctx.fillText( symbol, position.x - dim.width, position.y + dim.width / 2 );
+        ctx.restore();
     },
     renderState: function( state, position, importance, accepting ) {
         var ctx = this.ctx;
@@ -194,7 +229,7 @@ Renderer.prototype = {
     renderTransition: function( from, via, to, angle ) {
         var strokeStyle = 'black';
         var ctx = this.ctx;
-        var transitionView = this.dfaview.transitions[ from ][ via ];
+        var transitionView = this.nfaview.transitions[ from ][ via ][ to ];
         var start, end, target;
         var circular = false;
 
@@ -213,12 +248,12 @@ Renderer.prototype = {
                 break;
         }
 
-        from = this.dfaview.states[ from ];
+        from = this.nfaview.states[ from ];
         if ( transitionView.detached ) {
             target = transitionView.position;
         }
         else {
-            to = this.dfaview.states[ to ];
+            to = this.nfaview.states[ to ];
             target = to.position;
             circular = to.state == from.state;
         }
@@ -293,39 +328,49 @@ Renderer.prototype = {
         }
         this.renderArrow( start, end );
         this.renderText( start.plus( end ).scale( 1 / 2 ), via );
-        
+
         ctx.restore();
     },
     hitTest: function( mouse ) {
         // check if the user is hovering a state
-        var dfaview = this.dfaview;
-        var dfa = dfaview.dfa;
+        var nfaview = this.nfaview;
+        var nfa = nfaview.nfa;
         var test = false;
         var alphabetsize = 0;
 
-        for ( var sigma in dfa.alphabet ) {
+        for ( var sigma in nfa.alphabet ) {
+            if ( this.showAlphabet ){
+                test = this.hitTestAlphabet( mouse, sigma, nfaview.alphabet[ sigma ].position );
+                if ( test ) {
+                    return [ 'alphabet', sigma ];
+                }
+            }
             ++alphabetsize;
         }
-        for ( var state in this.dfaview.states ) {
-            test = this.hitTestState( mouse, state, dfaview.states[ state ].position );
-            if ( test ) {
-                return [ 'state', state ];
-            }
-        }
-        for ( var state in this.dfaview.states ) {
-            var j = 0;
-            for ( var sigma in dfa.alphabet ) {
-                test = this.hitTestTransition(
-                    mouse,
-                    dfaview.states[ state ].position,
-                    sigma,
-                    dfaview.states[ dfa.transitions[ state ][ sigma ] ].position,
-                    j / alphabetsize
-                );
+        if ( !this.showAlphabet ){
+            for ( var state in this.nfaview.states ) {
+                test = this.hitTestState( mouse, state, nfaview.states[ state ].position );
                 if ( test ) {
-                    return [ 'transition', [ state, sigma ] ];
+                    return [ 'state', state ];
                 }
-                ++j;
+            }
+            for ( var state in this.nfaview.states ) {
+                var j = 0;
+                for ( var sigma in nfa.alphabet ) {
+                    for ( var to in nfa.transitions[ state ][ sigma ] ) {
+                        test = this.hitTestTransition(
+                            mouse,
+                            nfaview.states[ state ].position,
+                            sigma,
+                            nfaview.states[ to ].position,
+                            j / nfa.transitionsnum[ state ]
+                        );
+                        if ( test ) {
+                            return [ 'transition', [ state, sigma, to ] ];
+                        }
+                        ++j;
+                    }
+                }
             }
         }
         return false;
@@ -362,6 +407,11 @@ Renderer.prototype = {
         var d = arrowhead.minus( mouse );
 
         return d.length() < this.ARROW_RADIUS;
+    },
+    hitTestAlphabet: function( mouse, symbol, position){
+        var d = mouse.minus( position );
+
+        return d.length() < this.ALPHABET_RADIUS;
     }
 };
-Renderer.extend( EventEmitter );
+NFARenderer.extend( EventEmitter );
