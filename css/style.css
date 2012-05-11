@@ -21,6 +21,8 @@ h1 {
     display: none;
 }
 header {
+    margin: 0;
+    padding: 0;
     border-bottom: 1px solid #8b9097;
     box-shadow: 0 1px 1px #aeb1b6;
     background-color: #f1f3f4;
@@ -131,8 +133,4 @@ header {
 }
 .toolbar .share span {
     background-image: url( '../images/chain.png' );
-}
-header {
-    margin: 0;
-    padding: 0;
 }
