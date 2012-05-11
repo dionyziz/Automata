@@ -75,7 +75,7 @@ NFARenderer.prototype = {
     constructor: NFARenderer,
     showAlphabet: false,
     render: function() {
-        this.ctx.clearRect( 0, 0, 800, 800 );
+        this.ctx.clearRect( 0, 0, this.ctx.canvas.width, this.ctx.canvas.height );
         var nfa = this.nfaview.nfa;
         var alphabetsize = 0;
         var stateArray = [];

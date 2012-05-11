@@ -40,7 +40,7 @@
         <script src='js/render.js'></script>
         <script src='js/editor.js'></script>
         <script src='js/test.js'></script>
-        <script src='js/jquery-1.7.2.min.js'></script>
         <script src='js/ui.js'></script>
+        <script src='js/jquery-1.7.2.min.js'></script>
     </body>
 </html>
