@@ -1,0 +1,138 @@
+body {
+    font-family: 'Segoe UI', 'Gill Sans', 'Optima', 'Trebuchet MS', Verdana, sans-serif;
+    font-size: 80%;
+    margin: 0;
+}
+a {
+    color: #527de3;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+.eof {
+    clear: both;
+}
+canvas {
+    display: block;
+    margin: auto;
+}
+h1 {
+    display: none;
+}
+header {
+    border-bottom: 1px solid #8b9097;
+    box-shadow: 0 1px 1px #aeb1b6;
+    background-color: #f1f3f4;
+}
+.account {
+    float: right;
+    padding: 0;
+    font-size: 90%;
+    margin: 0 7px;
+    list-style: none;
+    font-weight: bold;
+    vertical-align: middle;
+    line-height: 35px;
+}
+.account .avatar {
+    float: left;
+    margin: 5px 7px;
+    border-radius: 3px;
+}
+.account li {
+    display: inline;
+}
+.account li:after {
+    content: '—';
+    padding: 7px 3px 7px 7px;
+    color: #ccc;
+}
+.account li:last-child:after {
+    content: '';
+    padding: 0;
+}
+.toolbar {
+    list-style: none;
+    margin: 0;
+    padding: 4px 2px;
+    height: 30px;
+    float: left;
+}
+.toolbar li {
+    display: block;
+    float: left;
+    border: 1px solid transparent;
+    border-radius: 3px;
+    margin: 0 1px;
+}
+.toolbar li a {
+    padding: 4px 7px 5px 7px;
+    text-decoration: none;    
+    color: black;
+    display: block;
+}
+.toolbar .selected {
+    border: 1px solid #c29037;
+}
+.toolbar li:hover {
+    border: 1px solid #f3d24f;
+}
+.toolbar li a {
+    border: 1px solid transparent;
+}
+.toolbar li:hover a {
+    border: 1px solid #fdf5d9;
+    background-image: linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0.01, rgb(252,237,179)),
+        color-stop(0.89, rgb(252,227,134)),
+        color-stop(1, rgb(255,255,255))
+    );
+}
+.toolbar .selected a {
+    background-image: linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
+    background-image: -o-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
+    background-image: -moz-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
+    background-image: -webkit-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
+    background-image: -ms-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
+
+    background-image: -webkit-gradient(
+        linear,
+        left bottom,
+        left top,
+        color-stop(0, rgb(255,244,128)),
+        color-stop(1, rgb(255,230,117))
+    );
+    border-radius: 3px;
+}
+.toolbar li span {
+    background-repeat: no-repeat;
+    display: block;
+    width: 20px;
+    height: 15px;
+    float: left;
+    position: relative;
+    top: 2px;
+}
+.toolbar .move span {
+    background-image: url( '../images/hand.png' );
+}
+.toolbar .transition span {
+    background-image: url( '../images/layer-shape-line.png' );
+}
+.toolbar .share span {
+    background-image: url( '../images/chain.png' );
+}
+header {
+    margin: 0;
+    padding: 0;
+}
