@@ -11,6 +11,11 @@ NFAEditor.prototype = {
     selectedElement: false,
     stateFromSelected: false,
     stateToSelected: false,
+    mode: 'moveState',
+    setMode: function( mode ) {
+        // mode is one of 'moveState' or 'createTransition'
+        this.mode = mode;
+    },
     mainLoop: function() {
         this.renderer.render();
         setTimeout( this.mainLoop.bind( this ), 17 );

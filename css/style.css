@@ -100,7 +100,7 @@ header {
         color-stop(1, rgb(255,255,255))
     );
 }
-.toolbar .selected a {
+.toolbar .selected a, .toolbar li:active a {
     background-image: linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
     background-image: -o-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
     background-image: -moz-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
