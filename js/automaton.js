@@ -5,7 +5,8 @@ function NFA( alphabet ) {
     };
     this.transitions = {
         s: {
-           'ε': {}
+           'ε': {},
+           '$$' : {}
         }
     };
     this.transitionsnum = {
@@ -18,12 +19,14 @@ function NFA( alphabet ) {
     }
     // array from state to dictionary from alphabet symbol to state
     this.numStates = 1;
+    this.nextnumState = 2;
     this.states = {
         's': true
     };
     this.startState = 's';
     // set of states that accept, array of state keys
     this.accept = [];
+    this.input = '';
     this.reset();
     EventEmitter.call( this );
 }
@@ -31,16 +34,24 @@ function NFA( alphabet ) {
 NFA.prototype = {
     constructor: NFA,
     addTransition: function( from, via, to ) {
-        assert( typeof this.alphabet[ via ] != 'undefined' );
+        if ( via != '$$' ) {
+            if ( typeof this.alphabet[ via ] == 'undefined' ) {
+                return false;
+            }
+        }
         assert( typeof this.states[ from ] != 'undefined' );
         assert( typeof this.states[ to ] != 'undefined' );
         this.transitions[ from ][ via ][ to ] = to;
         ++this.transitionsnum[ from ];
 
         this.emit( 'transitionadded', from, via, to );
+
+        return true;
     },
     deleteTransition: function( from, via, to ) {
-        assert( typeof this.alphabet[ via ] != 'undefined' );
+        if ( via != '$$' ) {
+            assert( typeof this.alphabet[ via ] != 'undefined' );
+        }
         assert( typeof this.states[ from ] != 'undefined' );
         assert( typeof this.states[ to ] != 'undefined' );
         if ( to in this.transitions[ from ][ via ] ){
@@ -57,7 +68,11 @@ NFA.prototype = {
         for ( var sigma in this.alphabet ) {
             this.transitions[ state ][ sigma ] = {};
         }
+
+        this.transitions[ state ][ '$$' ] = {};
+
         ++this.numStates;
+        ++this.nextnumState;
         this.emit( 'stateadded', state );
 
         return this.numStates;
@@ -90,7 +105,9 @@ NFA.prototype = {
     reset: function() {
         assert( this.numStates > 0 );
         assert( typeof this.states[ this.startState ] != 'undefined' );
-        this.currentStates = [ this.startState ];
+        this.currentStates = {};
+        this.currentStates[ this.startState ] = this.startState;
+        this.epsilonClose();
     },
     run: function( input ) {
         // To run the NFA do BFS to the tree that will be produced by NFA
@@ -114,26 +131,43 @@ NFA.prototype = {
         var nextLevelStates = {};
 
         for ( state in this.currentStates ){
-            if ( typeof this.transitions[ state ][ symbol ] == 'undefined' ) {
-                throw 'Undefined transition from state ' + state + ' via symbol ' + symbol;
+            if ( typeof this.transitions[ state ][ symbol ] != 'undefined' ) {
+                // throw 'Undefined transition from state ' + state + ' via symbol ' + symbol;
 
-                nextLevelStates.concat( this.transitions[ state ][ symbol ] );
-                nextLevelStates.concat( this.transitions[ state ][ 'ε' ] );
+                for ( var to in this.transitions[ state ][ symbol ] ){
+                    nextLevelStates[ to ] = to;
+                }
             }
         }
 
-        //Remove duplicate values from nextLevelStates
-        //var i, obj = {}, outarr = {};
-
-        /*for ( i = 0; i < nextLevelStates.lenght; ++i ) {
-            obj[ nextLevelStates[ i ] ] = 0;
-        }
-
-        for ( i in obj ) {
-            outarr.push( i );
-        }*/
-
         this.currentStates = nextLevelStates;
+        this.epsilonClose();
+
+    },
+    epsilonClose: function() {
+        var changeFlag = false;
+
+        do {
+            changeFlag = false;
+            for ( var state in this.currentStates ) {
+                for ( var to in this.transitions[ state ][ 'ε' ] ) {
+                    if ( ! ( to in this.currentStates ) ) {
+                        changeFlag = true;
+                        this.currentStates[ to ] = to;
+                    }
+                }
+            }
+        } while( changeFlag );
+    },
+    nextStepByStep: function() {
+        if ( this.input.length > 0 ) {
+            this.next( this.input[ 0 ] );
+            this.input = this.input.substr( 1 );
+            return true;
+        }
+        else {
+            return false;
+        }
     }
 };
 NFA.extend( EventEmitter );
