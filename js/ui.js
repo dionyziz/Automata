@@ -26,5 +26,8 @@ $( '.toolbar .transition' ).click( function() {
     return false;
 } );
 
-var editor = new NFAEditor( canvas, nfaview );
+var inputSymbol = document.getElementById( 'inputSymbol' );
+var errorSymbol = document.getElementById( 'errorSymbol' );
+var changeStateName = document.getElementById( 'changeStateName' );
+var editor = new NFAEditor( canvas, nfaview, [ inputSymbol, errorSymbol ], changeStateName );
 editor.play();
