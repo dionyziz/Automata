@@ -5,6 +5,7 @@ function NFARenderer( canvas, nfaview ) {
     this.ctx = this.canvas.getContext( '2d' );
     this.nfaview = nfaview;
     this.mouseOverElement = [];
+    this.selectedStates = {};
     this.offset = new Vector( canvas.offsetLeft, canvas.offsetTop );
 
     function mouseOut( element, e ) {
@@ -79,6 +80,9 @@ NFARenderer.prototype = {
     runMode : false,
     flush: 0,
     flushBl : false,
+    selectionRectShow : false,
+    selectionRectFrom : new Vector( 100, 100 ),
+    selectionRectTo : new Vector( 300, 300 ),
     render: function() {
         this.ctx.clearRect( 0, 0, this.ctx.canvas.width, this.ctx.canvas.height );
         var nfa = this.nfaview.nfa;
@@ -109,17 +113,15 @@ NFARenderer.prototype = {
             }
         }
 
+        var RectMinx = Math.min( this.selectionRectFrom.x, this.selectionRectTo.x );
+        var RectMiny = Math.min( this.selectionRectFrom.y, this.selectionRectTo.y );
+        var RectMaxx = Math.max( this.selectionRectFrom.x, this.selectionRectTo.x );
+        var RectMaxy = Math.max( this.selectionRectFrom.y, this.selectionRectTo.y );
+
         for ( var i = 0; i < nfa.numStates; ++i ) {
             if ( typeof stateArray[ i ] != 'undefined' ) {
                 var state = stateArray[ i ].state;
                 var outstatesnum = nfa.transitionsnum[ state ];
-
-               /*for ( var sigma in nfa.alphabet ) {
-                   for ( var to in nfa.transitions[ state ][ sigma ] ) {
-                       this.renderTransition( state, sigma, to, j / outstatesnum, true );
-                       ++j;
-                   }
-               }*/
 
                 for ( var j = 0; j < nfa.numStates; ++ j ) {
                     var outstring = '';
@@ -152,35 +154,38 @@ NFARenderer.prototype = {
                     stateArray[ i ].importance,
                     nfa.accept[ stateArray[ i ].state ]
                 );
+
+                if ( this.selectionRectShow ) {
+                    var statePosition = this.nfaview.states[ state ].position;
+                    if ( ( RectMinx <= statePosition.x )
+                    &&   ( RectMiny <= statePosition.y )
+                    &&   ( RectMaxx >= statePosition.x )
+                    &&   ( RectMaxy >= statePosition.y ) ) {
+                        this.selectedStates[ state ] = state;
+                        this.nfaview.states[ state ].importance = 'strong';
+                    }
+                    else {
+                        delete this.selectedStates[ state ];
+                        this.nfaview.states[ state ].importance = 'normal';
+                    }
+                }
             }
         }
 
-        /* if (this.showAlphabet){
-            for ( var symbol in nfa.alphabet ) {
-                this.renderAlphabet( nfaview.alphabet[ symbol ].symbol, nfaview.alphabet[ symbol ].position, nfaview.alphabet[ symbol ].importance );
-            }
-        } */
+        if ( this.selectionRectShow ) {
+            this.renderRect( this.selectionRectFrom, this.selectionRectTo );
+        }
     },
-    renderAlphabet: function( symbol, position, importance ){
+    renderRect : function( from, to ) {
         var ctx = this.ctx;
-        var dim = ctx.measureText( symbol );
 
         ctx.save();
-        ctx.fillStyle = 'black';
-        switch ( importance ) {
-            case 'normal':
-                ctx.font = '16pt Verdana';
-                break;
-            case 'emphasis':
-                ctx.font = '20pt Verdana';
-                ctx.shadowColor = '#7985b1';
-                ctx.shadowBlur = 15;
-                break;
-        };
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 6;
-        ctx.strokeText( symbol, position.x - dim.width, position.y + dim.width / 2 );
-        ctx.fillText( symbol, position.x - dim.width, position.y + dim.width / 2 );
+        ctx.strokeStyle = '#00aaff';
+        ctx.fillStyle = '#6eddff';
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.5;
+        ctx.strokeRect( from.x, from.y, to.x - from.x, to.y - from.y );
+        ctx.fillRect( from.x, from.y, to.x - from.x, to.y - from.y );
         ctx.restore();
     },
     renderState: function( state, position, importance, accepting ) {
@@ -254,8 +259,20 @@ NFARenderer.prototype = {
         if ( !( this.runMode && ( this.nfaview.nfa.currentStates[ state ] == state ) ) ) {
             ctx.fill();
         }
+
         this.renderText( new Vector(0, 0), nfaview.stateName[ state ], false );
         ctx.restore();
+
+        if ( this.nfaview.nfa.startState == state ) {
+            if ( position.x - 70 > 0 ) {
+                var start = new Vector( position.x - 70, position.y );
+            }
+            else {
+                var start = new Vector( 2 , position.y );
+            }
+            var end = new Vector( position.x - this.STATE_RADIUS, position.y );
+            this.renderArrow( start, end );
+        }
     },
     renderArrow: function( from, to ) {
         var ctx = this.ctx;
@@ -299,18 +316,58 @@ NFARenderer.prototype = {
     },
     renderText: function( location, text, stroke ) {
         var ctx = this.ctx;
-        var dim = ctx.measureText( text );
+        var deftext = '';
+        var subtext = '';
 
-        ctx.save();
-        ctx.fillStyle = 'black';
-        ctx.font = '12pt Verdana';
-        ctx.strokeStyle = 'white';
-        ctx.lineWidth = 6;
-        if ( stroke ) {
-            ctx.strokeText( text, location.x - dim.width, location.y + dim.width / 2 );
+        var findsubtext = false;
+        for ( var j = 0; j < text.length; ++j ) {
+            var character = text.charAt( j );
+            if ( character == '_' ) {
+                findsubtext = true;
+            }
+            else {
+                if ( findsubtext ) {
+                    subtext += character;
+                }
+                else {
+                    deftext += character;
+                }
+            }
         }
-        ctx.fillText( text, location.x - dim.width, location.y + dim.width / 2 );
-        ctx.restore();
+
+        if ( subtext != '' ) {
+            var defdim = ctx.measureText( deftext );
+            var subdim = ctx.measureText( subtext );
+            ctx.save();
+            ctx.fillStyle = 'black';
+            ctx.font = '12pt Verdana';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 6;
+            if ( stroke ) {
+                ctx.strokeText( deftext, location.x - defdim.width, location.y + defdim.width / 2 );
+            }
+            ctx.fillText( deftext, location.x - defdim.width, location.y + defdim.width / 2 );
+
+            ctx.font = '8pt Verdana';
+            if ( stroke ) {
+                ctx.strokeText( subtext, location.x + defdim.width / 2, location.y + defdim.width / 2 + 4 );
+            }
+            ctx.fillText( subtext, location.x + defdim.width / 2, location.y + defdim.width / 2 + 4 );
+            ctx.restore();
+        }
+        else {
+            var dim = ctx.measureText( text );
+            ctx.save();
+            ctx.fillStyle = 'black';
+            ctx.font = '12pt Verdana';
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 6;
+            if ( stroke ) {
+                ctx.strokeText( text, location.x - dim.width, location.y + dim.width / 2 );
+            }
+            ctx.fillText( text, location.x - dim.width, location.y + dim.width / 2 );
+            ctx.restore();
+        }
     },
     renderTransition: function( from, via, to, angle, showText ) {
         var strokeStyle = 'black';
@@ -420,6 +477,7 @@ NFARenderer.prototype = {
             end = end.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
         }
         this.renderArrow( start, end );
+
         if ( showText ) {
             this.renderText( start.plus( end ).scale( 1 / 2 ), via , true);
         }
@@ -432,16 +490,6 @@ NFARenderer.prototype = {
         var nfa = nfaview.nfa;
         var test = false;
         var alphabetsize = 0;
-
-        /* for ( var sigma in nfa.alphabet ) {
-            if ( this.showAlphabet ){
-                test = this.hitTestAlphabet( mouse, sigma, nfaview.alphabet[ sigma ].position );
-                if ( test ) {
-                    return [ 'alphabet', sigma ];
-                }
-            }
-            ++alphabetsize;
-        }*/
 
         if ( !this.showAlphabet ){
             for ( var state in this.nfaview.states ) {
@@ -504,10 +552,5 @@ NFARenderer.prototype = {
 
         return d.length() < this.ARROW_RADIUS;
     },
-    hitTestAlphabet: function( mouse, symbol, position){
-        var d = mouse.minus( position );
-
-        return d.length() < this.ALPHABET_RADIUS;
-    }
 };
 NFARenderer.extend( EventEmitter );

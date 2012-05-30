@@ -12,12 +12,11 @@ NFAEditor.prototype = {
     dragging: false,
     maxz: 1,
     selectedElement: false,
-    stateFromSelected: false,
-    stateToSelected: false,
     transitionToChange: false,
     stateToChangeName: false,
-    transitionToChangeSymbol: false,
+    transitionToChangeName: false,
     mode: 'moveState',
+    selectedRectStates : false,
     setRun: function ( mode ) {
         this.renderer.runMode = mode;
         this.renderer.flush = 0;
@@ -27,6 +26,7 @@ NFAEditor.prototype = {
         // mode is one of 'moveState' or 'createTransition'
         this.mode = mode;
         this.renderer.mode = mode;
+        this.elementDeselected();
     },
     mainLoop: function() {
         this.renderer.render();
@@ -66,6 +66,98 @@ NFAEditor.prototype = {
                 break;
         }
         this.selectedElement = false;
+
+        for ( var selstate in this.selectedRectStates ) {
+            this.nfaview.states[ selstate ].importance = 'normal';
+        }
+        this.selectedRectStates = {};
+        this.renderer.selectedStates = {};
+    },
+    inputSubmit : function() {
+        if ( this.transitionToChange != false ) {
+            var sigma = this.inputSymbol.value;
+            var insertOk = false;
+            var symboladded = sigma.split(',');
+            for ( var i = 0; i < symboladded.length; ++i ) {
+                symbol = symboladded[ i ];
+                if ( symbol != '' ) {
+                    insertOk = this.nfa.addTransition( this.transitionToChange[ 0 ], symbol, this.transitionToChange[ 2 ] );
+                }
+                else {
+                    insertOk = this.nfa.addTransition( this.transitionToChange[ 0 ], 'ε', this.transitionToChange[ 2 ] );
+                }
+            }
+            if ( insertOk ) {
+                this.inputSymbol.value = '';
+                this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
+                this.errorSymbol.hidden = true;
+                this.inputSymbol.type = 'hidden';
+                this.renderer.showAlphabet = false;
+                this.transitionToChange = false;
+            }
+            else {
+                var newx = parseFloat( this.inputSymbol.style.left );
+                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
+                this.errorSymbol.style.left = '' + newx + 'px' ;
+                this.errorSymbol.style.top = '' + newy + 'px' ;
+                this.errorSymbol.hidden = false;
+            }
+        }
+        else if ( this.stateToChangeName != false ) {
+            var newName = this.changeStateName.value;
+            this.nfaview.stateName[ this.stateToChangeName ] = newName;
+            this.changeStateName.value = '';
+            this.changeStateName.type = 'hidden';
+            this.renderer.showAlphabet = false;
+            this.stateToChangeName = false;
+        }
+        else if ( this.transitionToChangeName != false ) {
+            var sigma = this.inputSymbol.value;
+            var insertOk = false;
+            var symboladded = sigma.split(',');
+            var newSymbol = {};
+            for ( var i = 0; i < symboladded.length; ++i ) {
+                symbol = symboladded[ i ];
+                if ( symbol != '' ) {
+                    newSymbol[ symbol ] = symbol;
+                    insertOk = this.nfa.addTransition( this.transitionToChangeName[ 0 ], symbol, this.transitionToChangeName[ 2 ] );
+                }
+                else {
+                    newSymbol[ 'ε' ] = 'ε';
+                    insertOk = this.nfa.addTransition( this.transitionToChangeName[ 0 ], 'ε', this.transitionToChangeName[ 2 ] );
+                }
+                if ( !insertOk ) {
+                    break;
+                }
+            }
+            if ( insertOk ) {
+                this.inputSymbol.value = '';
+                for ( var sigma in this.nfaview.invtransitions[ this.transitionToChangeName[ 0 ] ][ this.transitionToChangeName[ 2 ] ] ){
+                    if ( ! ( sigma in newSymbol ) ) {
+                        this.nfa.deleteTransition( this.transitionToChangeName[ 0 ], sigma, this.transitionToChangeName[ 2 ] );
+                    }
+                }
+                this.errorSymbol.hidden = true;
+                this.inputSymbol.type = 'hidden';
+                this.renderer.showAlphabet = false;
+                this.elementDeselected();
+                this.transitionToChangeName = false;
+            }
+            else {
+                var newx = parseFloat( this.inputSymbol.style.left );
+                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
+                this.errorSymbol.style.left = '' + newx + 'px' ;
+                this.errorSymbol.style.top = '' + newy + 'px' ;
+                this.errorSymbol.hidden = false;
+            }
+        }
+    },
+    isSelectedRect : function () {
+        for ( var selstate in this.selectedRectStates ) {
+            return true;
+        }
+
+        return false;
     },
     isStateSelected: function( state ) {
         var ret =
@@ -93,24 +185,22 @@ NFAEditor.prototype = {
                 self.selectedElement = false;
             }
         } );
-        renderer.on( 'mouseoveralphabet', function( symbol ) {
-            nfaview.alphabet[ symbol ].importance = 'emphasis';
-            canvas.style.cursor = 'pointer';
-        } );
-        function alphabetOut( symbol ) {
-            nfaview.alphabet[ symbol ].importance = 'normal';
-            canvas.style.cursor = 'default';
-        }
         renderer.on( 'mouseoverstate', function( state ) {
-            if ( !self.dragging
-              && !self.isStateSelected( state ) ) {
-                nfaview.states[ state ].importance = 'emphasis';
+            if ( ( typeof self.selectedRectStates[ state ] == 'undefined' ) && ( !renderer.selectionRectShow ) ) {
+                if ( !self.dragging
+                && !self.isStateSelected( state ) ) {
+                    nfaview.states[ state ].importance = 'emphasis';
+                }
             }
-            canvas.style.cursor = 'pointer';
+            if ( !renderer.selectionRectShow ) {
+                canvas.style.cursor = 'pointer';
+            }
         } );
         function stateOut( state ) {
-            if ( !self.isStateSelected( state ) ) {
-                nfaview.states[ state ].importance = 'normal';
+            if ( typeof self.selectedRectStates[ state ] == 'undefined' ) {
+                if ( !self.isStateSelected( state ) ) {
+                    nfaview.states[ state ].importance = 'normal';
+                }
             }
             canvas.style.cursor = 'default';
         }
@@ -119,7 +209,9 @@ NFAEditor.prototype = {
                 nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ].importance = 'emphasis';
                 nfaview.viewtransitions[ transition[ 0 ] ][ transition[ 2 ] ].importance = 'emphasis';
             }
-            canvas.style.cursor = 'pointer';
+            if ( !renderer.selectionRectShow ) {
+                canvas.style.cursor = 'pointer';
+            }
         } );
         function transitionOut( transition ) {
             if ( !self.isTransitionSelected( transition ) ) {
@@ -130,168 +222,222 @@ NFAEditor.prototype = {
         }
         renderer.on( 'mouseouttransition', transitionOut );
         renderer.on( 'mouseoutstate', stateOut );
-        renderer.on( 'mouseoutalphabet', alphabetOut );
         renderer.on( 'mousedownstate', function( state, e ) {
-            if ( self.stateFromSelected == false ){ //TODO remove if...
-                var client = new Vector( e.clientX, e.clientY );
-                var s = nfaview.states[ state ].position;
-
-                self.dragging = true;
-
-                nfaview.states[ state ].zindex = self.maxz++;
-
-                function move( e ) {
-                    var newClient = new Vector( e.clientX, e.clientY );
-                    var d = newClient.minus( client );
-                    nfaview.states[ state ].position = s.plus( d );
-                }
-                function up( e ) {
-                    renderer.removeListener( 'mousemove', move );
-                    renderer.on( 'mouseoutstate', stateOut );
-                    renderer.on( 'mouseouttransition', transitionOut );
-                    self.dragging = false;
-                    canvas.style.cursor = 'default';
-                }
-                renderer.on( 'mousemove', move );
-                renderer.once( 'mouseup', up );
-                renderer.removeListener( 'mouseoutstate', stateOut );
-                renderer.removeListener( 'mouseouttransition', transitionOut );
-
-            if ( self.mode == 'moveState' ) {
-                self.elementSelected( [ 'state', state ] );
-            }
-            else if ( self.mode == 'createTransition' ) {
-                // nfaview.nfa.addTransition( state, '$$', state );
-                nfaview.newtransitionFrom = state;
-                nfaview.newtransition.position = nfaview.states[ state ].position;
-                nfaview.states[ state ].importance = 'normal';
-                renderer.emit( 'mouseup', e );
-                renderer.emit( 'mousedowntransition', [ state, '$$', false ], e );
-            }
-            }
-            else{
-                renderer.showAlphabet = true;
-                self.stateToSelected = state;
-            }
-
-        } );
-        renderer.on( 'mouseupalphabet', function( symbol, e ) {
-            if ( renderer.showAlphabet == true ){
-                nfaview.nfa.addTransition( self.stateFromSelected, symbol, self.stateToSelected );
-                renderer.showAlphabet = false;
-                self.stateFromSelected = false;
-                self.stateToSelected = false;
-            }
-        } );
-        renderer.on( 'mousedowntransition', function( transition, e ) {
-            if ( transition[ 2 ] == false ) {
-                var transitionView = nfaview.newtransition;
-                var to = self.nfaview.states[ transition[ 0 ] ].position;
-            }
-            else {
-                var transitionView = nfaview.viewtransitions[ transition[ 0 ] ][ transition[ 2 ] ];
-                var to = self.nfaview.states[ transition[ 2 ] ].position;
-            }
-            var oldClient = new Vector( e.clientX, e.clientY );
-            var from = self.nfaview.states[ transition[ 0 ] ].position;
-            var angle = from.minus( to ).theta();
-            var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+            var client = new Vector( e.clientX, e.clientY );
 
             self.dragging = true;
 
-            nfaview.states[ transition[ 0 ] ].zindex = self.maxz++;
+            if ( self.selectedRectStates[ state ] != state ) {
+                var s = nfaview.states[ state ].position;
+
+                nfaview.states[ state ].zindex = self.maxz++;
+                self.elementDeselected();
+            }
+            else {
+                var s = {};
+                for ( var selstate in self.selectedRectStates ) {
+                    s[ selstate ] = nfaview.states[ selstate ].position;
+                    nfaview.states[ selstate ].zindex = self.maxz++;
+                }
+            }
 
             function move( e ) {
-                var client = new Vector( e.clientX, e.clientY )
-                var d = client.minus( oldClient );
+                canvas.style.cursor = 'pointer';
+                var newClient = new Vector( e.clientX, e.clientY );
+                var d = newClient.minus( client );
 
-                transitionView.position = s.plus( d );
-
-                var test = renderer.hitTest( client.minus( renderer.offset ) );
-                if ( ( ( test[ 0 ] == 'state' )
-                  && ( test[ 1 ] != transition[ 2 ] )
-                  && !( transition[ 2 ] == false ) )
-                  || ( ( transition[ 1 ] == '$$' ) && ( transition[ 2 ] != false ) ) ) {
-                    transitionView.detached = false;
-                    for ( var sigma in nfaview.invtransitions[ transition[ 0 ] ][ transition[ 2 ] ] ) {
-                        nfaview.nfa.deleteTransition( transition[ 0 ], sigma, transition[ 2 ] );
-                        nfaview.nfa.addTransition( transition[ 0 ], sigma, test[ 1 ] );
+                if ( self.selectedRectStates[ state ] == state ) {
+                    for ( var selstate in self.selectedRectStates ) {
+                        nfaview.states[ selstate ].position = s[ selstate ].plus( d );
                     }
-                    transition[ 2 ] = test[ 1 ];
-                    renderer.emit( 'mouseup', e );
-                    self.elementDeselected();
-                }
-                else if ( !( transition[ 2 ] == false ) ) {
-                    transitionView.detached = true;
                 }
                 else {
-                    if ( ( test[ 0 ] == 'state' )
-                      && ( test[ 1 ] != transition[ 0 ] ) ) {
-                        nfaview.nfa.addTransition( transition[ 0 ], '$$', test[ 1 ] );
-                        nfaview.newtransitionFrom = false;
-                        transition[ 1 ] = false;
-                        transition[ 2 ] = test[ 1 ];
-                        renderer.emit( 'mouseup', e );
-                    }
+                    nfaview.states[ state ].position = s.plus( d );
                 }
             }
             function up( e ) {
-                if ( ( transition[ 1 ] == '$$' ) && ( transition[ 2 ] != false ) ) {
-                    var newx = ( ( nfaview.states[ transition[ 0 ] ].position.x + nfaview.states[ transition[ 2 ] ].position.x ) / 2 ) - ( parseFloat( self.inputSymbol.style.width ) / 2 );
-                    var newy = ( ( nfaview.states[ transition[ 0 ] ].position.y + nfaview.states[ transition[ 2 ] ].position.y ) / 2 ) + ( parseFloat( self.inputSymbol.style.height ) / 2 );
-                    self.transitionToChange = transition;
-                    renderer.showAlphabet = true;
-                    self.inputSymbol.style.left = '' + newx + 'px' ;
-                    self.inputSymbol.style.top = '' + newy + 'px' ;
-                    self.inputSymbol.type = 'text';
-                    self.inputSymbol.focus();
-                }
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
                 self.dragging = false;
                 canvas.style.cursor = 'default';
-                if ( transition[ 1 ] == false ) {
-                    nfaview.nfa.addTransition( transition[ 0 ], '$$', transition[ 2 ] );
-                    nfaview.newtransitionFrom = false;
-                    renderer.emit( 'mousedowntransition', [ transition[ 0 ], '$$', transition[ 2 ] ], e );
-                }
-                else if ( transition[ 2 ] == false ) {
-                    var client = new Vector( e.clientX, e.clientY )
-                    var d = client.minus( oldClient );
-                    var test = renderer.hitTest( client.minus( renderer.offset ) );
-
-                    if ( test[ 0 ] == 'state' ) {
-                        nfaview.nfa.addTransition( transition[ 0 ], '$$', transition[ 0 ] );
-                        nfaview.newtransitionFrom = false;
-                        renderer.emit( 'mousedowntransition', [ transition[ 0 ], '$$', transition[ 0 ] ], e );
-                    }
-                    else {
-                        nfaview.newtransitionFrom = false;
-                    }
-                }
-                else {
-                    transitionView.detached = false;
-                }
             }
             renderer.on( 'mousemove', move );
             renderer.once( 'mouseup', up );
             renderer.removeListener( 'mouseoutstate', stateOut );
             renderer.removeListener( 'mouseouttransition', transitionOut );
 
-            if ( transition[ 2 ] != false ) {
+            if ( self.mode == 'moveState' ) {
+                self.elementSelected( [ 'state', state ] );
+            }
+            else if ( self.mode == 'createTransition' ) {
+                nfaview.newtransitionFrom = state;
+                nfaview.newtransition.position = nfaview.states[ state ].position;
+                nfaview.states[ state ].importance = 'normal';
+                renderer.emit( 'mouseup', e );
+                renderer.emit( 'mousenewtransition', [ state, '$$', false, false ], e );
+            }
+        } );
+        renderer.on( 'mousenewtransition' , function( transition, e ) {
+            if ( transition[ 3 ] == false ) {
+                var transitionView = nfaview.newtransition;
+                var to = self.nfaview.states[ transition[ 0 ] ].position;
+                var oldClient = new Vector( e.clientX, e.clientY );
+                var from = self.nfaview.states[ transition[ 0 ] ].position;
+                var angle = from.minus( new Vector( e.clientX, e.clientY ) ).theta();
+                var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+
+                canvas.style.cursor = 'pointer';
+                self.dragging = true;
+
+                nfaview.states[ transition[ 0 ] ].zindex = self.maxz++;
+
+                function move( e ) {
+                    var client = new Vector( e.clientX, e.clientY );
+                    var d = client.minus( oldClient );
+
+                    transitionView.position = new Vector ( e.clientX, e.clientY - 39 ); // TODO fix this to be more general...
+                }
+                function up( e ) {
+                    var client = new Vector( e.clientX, e.clientY );
+                    var test = renderer.hitTest( client.minus( renderer.offset ) );
+                    if ( test[ 0 ] == 'state' ) {
+                        nfaview.nfa.addTransition( transition[ 0 ], '$$', test[ 1 ] );
+                        nfaview.newtransitionFrom = false;
+                        transition[ 2 ] = test[ 1 ];
+                    }
+
+                    renderer.removeListener( 'mousemove', move );
+                    renderer.removeListener( 'mouseup', up );
+                    renderer.on( 'mouseoutstate', stateOut );
+                    renderer.on( 'mouseouttransition', transitionOut );
+                    self.dragging = false;
+                    canvas.style.cursor = 'default';
+                    if ( transition[ 2 ] != false ) {
+                        nfaview.nfa.addTransition( transition[ 0 ], '$$', transition[ 2 ] );
+                        nfaview.newtransitionFrom = false;
+                        renderer.emit( 'mousedowntransition', [ transition[ 0 ], '$$', transition[ 2 ] ], e );
+                    }
+                    nfaview.newtransitionFrom = false;
+                    self.elementDeselected();
+                }
+
+                renderer.on( 'mousemove', move );
+                renderer.once( 'mouseup', up );
+                renderer.removeListener( 'mouseoutstate', stateOut );
+                renderer.removeListener( 'mouseouttransition', transitionOut );
+            }
+        } );
+        renderer.on( 'mousedowntransition', function( transition, e ) {
+            if ( typeof transition[ 3 ] == 'undefined' ) {
+                var transitionView = nfaview.viewtransitions[ transition[ 0 ] ][ transition[ 2 ] ];
+                var to = self.nfaview.states[ transition[ 2 ] ].position;
+                var oldClient = new Vector( e.clientX, e.clientY );
+                var from = self.nfaview.states[ transition[ 0 ] ].position;
+                var angle = from.minus( to ).theta();
+                var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+
+                self.dragging = true;
+
+                nfaview.states[ transition[ 0 ] ].zindex = self.maxz++;
+
+                function move( e ) {
+                    var client = new Vector( e.clientX, e.clientY );
+                    var d = client.minus( oldClient );
+
+                    transitionView.position = s.plus( d );
+
+                    transitionView.detached = true;
+                }
+                function up( e ) {
+                    if ( transition[ 1 ] != '$$' ) {
+                        var client = new Vector( e.clientX, e.clientY );
+                        var test = renderer.hitTest( client.minus( renderer.offset ) );
+                        if ( test[ 0 ] == 'state' ) {
+                            transitionView.detached = false;
+                            for ( var sigma in nfaview.invtransitions[ transition[ 0 ] ][ transition[ 2 ] ] ) {
+                                nfaview.nfa.deleteTransition( transition[ 0 ], sigma, transition[ 2 ] );
+                                nfaview.nfa.addTransition( transition[ 0 ], sigma, test[ 1 ] );
+                            }
+                            transition[ 2 ] = test[ 1 ];
+                        }
+                    }
+
+                    if ( transition[ 1 ] == '$$' ) {
+                        var newx = ( ( nfaview.states[ transition[ 0 ] ].position.x
+                                   + nfaview.states[ transition[ 2 ] ].position.x ) / 2 )
+                                   - ( parseFloat( self.inputSymbol.style.width ) / 2 );
+                        var newy = ( ( nfaview.states[ transition[ 0 ] ].position.y
+                                   + nfaview.states[ transition[ 2 ] ].position.y ) / 2 )
+                                   + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; //TODO fix 20 to samething more general
+                        self.transitionToChange = transition;
+                        renderer.showAlphabet = true;
+                        self.inputSymbol.style.left = '' + newx + 'px' ;
+                        self.inputSymbol.style.top = '' + newy + 'px' ;
+                        self.inputSymbol.type = 'text';
+                        self.inputSymbol.focus();
+                        self.elementDeselected();
+                    }
+
+                    renderer.removeListener( 'mousemove', move );
+                    renderer.removeListener( 'mouseup', up );
+                    renderer.on( 'mouseoutstate', stateOut );
+                    renderer.on( 'mouseouttransition', transitionOut );
+                    self.dragging = false;
+                    canvas.style.cursor = 'default';
+                    transitionView.detached = false;
+                }
+
+                renderer.on( 'mousemove', move );
+                renderer.once( 'mouseup', up );
+                renderer.removeListener( 'mouseoutstate', stateOut );
+                renderer.removeListener( 'mouseouttransition', transitionOut );
+                if ( transition[ 1 ] == '$$' ) {
+                    renderer.emit( 'mouseup', e );
+                }
                 self.elementSelected( [ 'transition', transition ] );
             }
         } );
         renderer.on( 'mousedownvoid', function( e ) {
             self.elementDeselected();
+            self.inputSubmit();
+
+            if ( self.mode == 'moveState' ) {
+            var client = new Vector( e.clientX, e.clientY - 39 ); //TODO find an more general type...
+
+            self.dragging = true;
+
+            renderer.selectionRectShow = true;
+            renderer.selectionRectFrom = client;
+            renderer.selectionRectTo = client;
+
+            function move( e ) {
+                var newClient = new Vector( e.clientX, e.clientY - 39 ); //TODO find an more general type...
+
+                self.selectedRectStates = renderer.selectedStates;
+                renderer.selectionRectTo = newClient;
+            }
+            function up( e ) {
+                renderer.removeListener( 'mousemove', move );
+                renderer.selectionRectShow = false;
+                renderer.on( 'mouseoutstate', stateOut );
+                renderer.on( 'mouseouttransition', transitionOut );
+                self.dragging = false;
+                canvas.style.cursor = 'default';
+            }
+            renderer.on( 'mousemove', move );
+            renderer.once( 'mouseup', up );
+            renderer.removeListener( 'mouseoutstate', stateOut );
+            renderer.removeListener( 'mouseouttransition', transitionOut );
+            }
         } );
         renderer.on( 'dblclick', function( e ) {
             if ( !renderer.showAlphabet ) {
+                self.elementDeselected();
                 var client = new Vector( e.clientX, e.clientY )
                 var test = renderer.hitTest( client.minus( renderer.offset ) );
                 if ( !test ) {
-                    var newState = nfaview.nfa.nextnumState;
+                    var newState = 'q_' + nfaview.nfa.nextnumState;
 
                     nfaview.nfa.addState( newState );
                     nfaview.states[ newState ].position = new Vector(
@@ -312,8 +458,12 @@ NFAEditor.prototype = {
                 }
                 else if ( test[ 0 ] == 'transition' ){
                     self.transitionToChangeName = test[ 1 ];
-                    var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.x ) / 2 ) - ( parseFloat( self.inputSymbol.style.width ) / 2 );
-                    var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 ) + ( parseFloat( self.inputSymbol.style.height ) / 2 );
+                    var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x
+                                + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.x ) / 2 )
+                                - ( parseFloat( self.inputSymbol.style.width ) / 2 );
+                    var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y
+                                + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
+                                + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; // TODO fix 20 to something more general
                     renderer.showAlphabet = true;
                     self.inputSymbol.style.left = '' + newx + 'px' ;
                     self.inputSymbol.style.top = '' + newy + 'px' ;
@@ -331,6 +481,14 @@ NFAEditor.prototype = {
         document.onkeydown = function( e ) {
             switch ( e.keyCode ) {
                 case 46: // delete
+                    if ( self.isSelectedRect() ) {
+                        for ( var selstate in self.selectedRectStates ) {
+                            nfa.deleteState( selstate );
+                        }
+                        self.selectedRectStates = {};
+                        renderer.selectedStates = {};
+                        return;
+                    }
                     if ( self.selectedElement == false ) {
                         return;
                     }
@@ -346,83 +504,7 @@ NFAEditor.prototype = {
                     }
                     break;
                 case 13: //enter
-                    if ( self.transitionToChange != false ) {
-                        var sigma = self.inputSymbol.value;
-                        var insertOk = false;
-                        var symboladded = sigma.split(',');
-                        for ( var i = 0; i < symboladded.length; ++i ) {
-                            symbol = symboladded[ i ];
-                            if ( symbol != '' ) {
-                                insertOk = nfa.addTransition( self.transitionToChange[ 0 ], symbol, self.transitionToChange[ 2 ] );
-                            }
-                            else {
-                                insertOk = nfa.addTransition( self.transitionToChange[ 0 ], 'ε', self.transitionToChange[ 2 ] );
-                            }
-                        }
-                        if ( insertOk ) {
-                            self.inputSymbol.value = '';
-                            nfa.deleteTransition( self.transitionToChange[ 0 ], self.transitionToChange[ 1 ], self.transitionToChange[ 2 ] );
-                            self.errorSymbol.hidden = true;
-                            self.inputSymbol.type = 'hidden';
-                            renderer.showAlphabet = false;
-                            self.transitionToChange = false;
-                        }
-                        else {
-                            var newx = parseFloat( self.inputSymbol.style.left );
-                            var newy = parseFloat( self.inputSymbol.style.top ) + parseFloat( self.inputSymbol.style.height ) + 8;
-                            self.errorSymbol.style.left = '' + newx + 'px' ;
-                            self.errorSymbol.style.top = '' + newy + 'px' ;
-                            self.errorSymbol.hidden = false;
-                        }
-                    }
-                    else if ( self.stateToChangeName != false ) {
-                        var newName = self.changeStateName.value;
-                        nfaview.stateName[ self.stateToChangeName ] = newName;
-                        self.changeStateName.value = '';
-                        self.changeStateName.type = 'hidden';
-                        renderer.showAlphabet = false;
-                        self.stateToChangeName = false;
-                    }
-                    else if ( self.transitionToChangeName != false ) {
-                        var sigma = self.inputSymbol.value;
-                        var insertOk = false;
-                        var symboladded = sigma.split(',');
-                        var newSymbol = {}
-                        for ( var i = 0; i < symboladded.length; ++i ) {
-                            symbol = symboladded[ i ];
-                            if ( symbol != '' ) {
-                                newSymbol[ symbol ] = symbol;
-                                insertOk = nfa.addTransition( self.transitionToChangeName[ 0 ], symbol, self.transitionToChangeName[ 2 ] );
-                            }
-                            else {
-                                newSymbol[ 'ε' ] = 'ε';
-                                insertOk = nfa.addTransition( self.transitionToChangeName[ 0 ], 'ε', self.transitionToChangeName[ 2 ] );
-                            }
-                            if ( !insertOk ) {
-                                break;
-                            }
-                        }
-                        if ( insertOk ) {
-                            self.inputSymbol.value = '';
-                            for ( var sigma in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ){
-                                if ( ! ( sigma in newSymbol ) ) {
-                                    nfa.deleteTransition( self.transitionToChangeName[ 0 ], sigma, self.transitionToChangeName[ 2 ] );
-                                }
-                            }
-                            self.errorSymbol.hidden = true;
-                            self.inputSymbol.type = 'hidden';
-                            renderer.showAlphabet = false;
-                            self.elementDeselected();
-                            self.transitionToChangeName = false;
-                        }
-                        else {
-                            var newx = parseFloat( self.inputSymbol.style.left );
-                            var newy = parseFloat( self.inputSymbol.style.top ) + parseFloat( self.inputSymbol.style.height ) + 8;
-                            self.errorSymbol.style.left = '' + newx + 'px' ;
-                            self.errorSymbol.style.top = '' + newy + 'px' ;
-                            self.errorSymbol.hidden = false;
-                        }
-                    }
+                    self.inputSubmit();
                     break;
                 case 27: //escape
                     if ( self.transitionToChange != false ) {
@@ -458,20 +540,29 @@ NFAEditor.prototype = {
                     }
                     break;
                     case 82: //r -- for run
-                    if ( ( self.mode != 'runMode' ) && ( !renderer.showAlphabet ) ) {
-                        self.elementDeselected();
-                        self.setRun( true );
-                        renderer.showAlphabet = true;
-                        nfa.reset();
-                        nfa.input = 'abbaabba';
-                    }
-                    break;
+                        if ( ( self.mode != 'runMode' )
+                        && ( !renderer.showAlphabet )
+                        && ( nfa.states[ nfa.startState ] )
+                        && ( !renderer.selectionRectShow ) ) {
+                            self.elementDeselected();
+                            self.setRun( true );
+                            renderer.showAlphabet = true;
+                            nfa.reset();
+                            nfa.input = 'abbaabba';
+                        }
+                        // TODO error message if there is no startState
+                        break;
                     case 34: //page down
-                    if ( !nfa.nextStepByStep() ) {
-                        renderer.showAlphabet = false;
-                        self.setRun( false );
-                    }
+                        if ( !nfa.nextStepByStep() ) {
+                            renderer.showAlphabet = false;
+                            self.setRun( false );
+                        }
                     break;
+                    case 73: // i -- change initial state
+                        if ( self.selectedElement[ 0 ] == 'state' ){
+                            nfa.startState = self.selectedElement[ 1 ];
+                        }
+                        break;
             }
         };
         document.onkeyup = function( e ) {

@@ -19,7 +19,7 @@ function NFA( alphabet ) {
     }
     // array from state to dictionary from alphabet symbol to state
     this.numStates = 1;
-    this.nextnumState = 2;
+    this.nextnumState = 1;
     this.states = {
         's': true
     };
@@ -107,21 +107,25 @@ NFA.prototype = {
         assert( typeof this.states[ this.startState ] != 'undefined' );
         this.currentStates = {};
         this.currentStates[ this.startState ] = this.startState;
-        this.epsilonClose();
+        if ( this.states[ this.startState ] ) {
+            this.epsilonClose();
+        }
     },
     run: function( input ) {
         // To run the NFA do BFS to the tree that will be produced by NFA
         this.reset();
 
-        while (     input.length
-                &&  this.currentStates.length ) {
-            this.next( input[ 0 ] );
-            input = input.substr( 1 );
-        }
+        if ( this.states[ this.startState ] ) {
+            while (     input.length
+                    &&  this.currentStates.length ) {
+                this.next( input[ 0 ] );
+                input = input.substr( 1 );
+            }
 
-        for ( finalstate in this.currentStates ) {
-            if ( this.accept[ finalstate ] ) {
-                return true;
+            for ( finalstate in this.currentStates ) {
+                if ( this.accept[ finalstate ] ) {
+                    return true;
+                }
             }
         }
 
@@ -132,8 +136,6 @@ NFA.prototype = {
 
         for ( state in this.currentStates ){
             if ( typeof this.transitions[ state ][ symbol ] != 'undefined' ) {
-                // throw 'Undefined transition from state ' + state + ' via symbol ' + symbol;
-
                 for ( var to in this.transitions[ state ][ symbol ] ){
                     nextLevelStates[ to ] = to;
                 }
@@ -142,7 +144,6 @@ NFA.prototype = {
 
         this.currentStates = nextLevelStates;
         this.epsilonClose();
-
     },
     epsilonClose: function() {
         var changeFlag = false;
@@ -160,10 +161,15 @@ NFA.prototype = {
         } while( changeFlag );
     },
     nextStepByStep: function() {
-        if ( this.input.length > 0 ) {
+        // function for the step by step running
+        if ( ( this.input.length > 0 ) && ( this.states[ this.startState ] ) ) {
             this.next( this.input[ 0 ] );
             this.input = this.input.substr( 1 );
-            return true;
+
+            for ( var i in this.currentStates ) {
+                return true;
+            }
+            return false;
         }
         else {
             return false;
