@@ -6,19 +6,8 @@ function NFAView( nfa ) {
     this.viewtransitions = {};
     this.invtransitions = {};
     this.stateName = {};
-    this.alphabet = {};
     // state object:
     this.nfa = nfa;
-    var j = 200;
-    for ( var symbol in nfa.alphabet ){
-        self.alphabet[ symbol ] = {
-            position: new Vector( j, 400 ),
-            importance: 'normal',
-            zindex: 0,
-            symbol: symbol,
-        };
-        j += 25;
-    }
     this.newtransition = {
         position: new Vector( 0, 0 ),
         importance: 'normal',
