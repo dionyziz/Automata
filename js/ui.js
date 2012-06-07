@@ -25,6 +25,10 @@ $( '.toolbar .transition' ).click( function() {
     editor.setMode( 'createTransition' );
     return false;
 } );
+$( '.toolbar .share' ).click( function() {
+    alert( 'Coming soon! :)' );
+    return false;
+} );
 
 // TODO: Encapsulate these into an object
 var runStep = 0;
