@@ -116,8 +116,8 @@ NFA.prototype = {
         this.reset();
 
         if ( this.states[ this.startState ] ) {
-            while (     input.length
-                    &&  this.currentStates.length ) {
+            while ( input.length
+                 && this.currentStates.length ) {
                 this.next( input[ 0 ] );
                 input = input.substr( 1 );
             }
@@ -152,13 +152,13 @@ NFA.prototype = {
             changeFlag = false;
             for ( var state in this.currentStates ) {
                 for ( var to in this.transitions[ state ][ 'ε' ] ) {
-                    if ( ! ( to in this.currentStates ) ) {
+                    if ( !( to in this.currentStates ) ) {
                         changeFlag = true;
                         this.currentStates[ to ] = to;
                     }
                 }
             }
-        } while( changeFlag );
+        } while ( changeFlag );
     },
     nextStepByStep: function() {
         // function for the step by step running
@@ -171,9 +171,7 @@ NFA.prototype = {
             }
             return false;
         }
-        else {
-            return false;
-        }
+        return false;
     }
 };
 NFA.extend( EventEmitter );

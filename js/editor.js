@@ -173,7 +173,37 @@ NFAEditor.prototype = {
          && same( this.selectedElement[ 1 ], transition )
         return ret;
     },
+    run: function( input ) {
+        // TODO: error message if there is no startState
+
+        if ( this.mode != 'runMode'
+          && !this.renderer.showAlphabet
+          && this.nfa.states[ this.nfa.startState ]
+          && !this.renderer.selectionRectShow ) {
+            this.elementDeselected();
+            this.setRun( true );
+            this.renderer.showAlphabet = true;
+            this.nfa.reset();
+            this.nfa.input = input;
+        }
+    },
+    runStep: function() {
+        if ( !nfa.nextStepByStep() ) {
+            this.renderer.showAlphabet = false;
+            this.setRun( false );
+            return false;
+        }
+        return true;
+    },
     play: function() {
+        // TODO: This function is huge and it includes many closures
+        //       which long-term can cause garbage collection issues.
+        //       We need to split this into individual functions with
+        //       no environment frames refering to local variables.
+        //       In particular, the events the renderer fires are better
+        //       written as separate functions of the editor object, not
+        //       as closures.
+        //
         var nfa = this.nfa;
         var renderer = this.renderer;
         var canvas = this.canvas;
@@ -445,18 +475,18 @@ NFAEditor.prototype = {
                         e.clientY - this.offset.y
                     );
                 }
-                else if ( test[ 0 ] == 'state' ){
+                else if ( test[ 0 ] == 'state' ) {
                     self.stateToChangeName = test[ 1 ];
                     var newx = nfaview.states[ test[ 1 ] ].position.x - ( parseFloat( self.changeStateName.style.width ) / 2 );
                     var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.style.height ) / 2 );
                     renderer.showAlphabet = true;
-                    self.changeStateName.style.left = '' + newx + 'px' ;
-                    self.changeStateName.style.top = '' + newy + 'px' ;
+                    self.changeStateName.style.left = newx + 'px';
+                    self.changeStateName.style.top = newy + 'px';
                     self.changeStateName.type = 'text';
                     self.changeStateName.value = nfaview.stateName[ test[ 1 ] ];
                     self.changeStateName.focus();
                 }
-                else if ( test[ 0 ] == 'transition' ){
+                else if ( test[ 0 ] == 'transition' ) {
                     self.transitionToChangeName = test[ 1 ];
                     var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x
                                 + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.x ) / 2 )
@@ -465,8 +495,8 @@ NFAEditor.prototype = {
                                 + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
                                 + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; // TODO fix 20 to something more general
                     renderer.showAlphabet = true;
-                    self.inputSymbol.style.left = '' + newx + 'px' ;
-                    self.inputSymbol.style.top = '' + newy + 'px' ;
+                    self.inputSymbol.style.left = newx + 'px';
+                    self.inputSymbol.style.top = newy + 'px';
                     self.inputSymbol.type = 'text';
                     var currentVal = '';
                     for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {
@@ -530,32 +560,13 @@ NFAEditor.prototype = {
                     }
                     break;
                 case 32: //space
-                    if ( self.selectedElement[ 0 ] == 'state' ){
+                    if ( self.selectedElement[ 0 ] == 'state' ) {
                         if ( nfa.accept[ self.selectedElement[ 1 ] ] ){
                             nfa.removeAcceptingState( self.selectedElement[ 1 ] );
                         }
                         else {
                             nfa.addAcceptingState( self.selectedElement[ 1 ] );
                         }
-                    }
-                    break;
-                case 82: //r -- for run
-                    if ( ( self.mode != 'runMode' )
-                    && ( !renderer.showAlphabet )
-                    && ( nfa.states[ nfa.startState ] )
-                    && ( !renderer.selectionRectShow ) ) {
-                        self.elementDeselected();
-                        self.setRun( true );
-                        renderer.showAlphabet = true;
-                        nfa.reset();
-                        nfa.input = 'abbaabba';
-                    }
-                    // TODO error message if there is no startState
-                    break;
-                case 34: //page down
-                    if ( !nfa.nextStepByStep() ) {
-                        renderer.showAlphabet = false;
-                        self.setRun( false );
                     }
                     break;
                 case 73: // i -- change initial state
