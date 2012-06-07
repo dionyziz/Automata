@@ -396,10 +396,10 @@ NFAEditor.prototype = {
                     if ( transition[ 1 ] == '$$' ) {
                         var newx = ( ( nfaview.states[ transition[ 0 ] ].position.x
                                    + nfaview.states[ transition[ 2 ] ].position.x ) / 2 )
-                                   - ( parseFloat( self.inputSymbol.style.width ) / 2 );
+                                   - ( parseFloat( self.inputSymbol.offsetWidth ) / 2 );
                         var newy = ( ( nfaview.states[ transition[ 0 ] ].position.y
                                    + nfaview.states[ transition[ 2 ] ].position.y ) / 2 )
-                                   + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; //TODO fix 20 to samething more general
+                                   + ( parseFloat( self.inputSymbol.offsetHeight ) / 2 ) + 20; //TODO fix 20 to samething more general
                         self.transitionToChange = transition;
                         renderer.showAlphabet = true;
                         self.inputSymbol.style.left = '' + newx + 'px' ;
@@ -477,8 +477,8 @@ NFAEditor.prototype = {
                 }
                 else if ( test[ 0 ] == 'state' ) {
                     self.stateToChangeName = test[ 1 ];
-                    var newx = nfaview.states[ test[ 1 ] ].position.x - ( parseFloat( self.changeStateName.style.width ) / 2 );
-                    var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.style.height ) / 2 );
+                    var newx = nfaview.states[ test[ 1 ] ].position.x - ( parseFloat( self.changeStateName.offsetWidth ) / 2 );
+                    var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.offsetHeight ) / 2 );
                     renderer.showAlphabet = true;
                     self.changeStateName.style.left = newx + 'px';
                     self.changeStateName.style.top = newy + 'px';
@@ -490,13 +490,13 @@ NFAEditor.prototype = {
                     self.transitionToChangeName = test[ 1 ];
                     var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x
                                 + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.x ) / 2 )
-                                - ( parseFloat( self.inputSymbol.style.width ) / 2 );
+                                - ( parseFloat( self.inputSymbol.offsetWidth ) / 2 );
                     var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y
                                 + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
                                 + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; // TODO fix 20 to something more general
                     renderer.showAlphabet = true;
-                    self.inputSymbol.style.left = newx + 'px';
-                    self.inputSymbol.style.top = newy + 'px';
+                    self.inputSymbol.style.left = '' + newx + 'px';
+                    self.inputSymbol.style.top = '' + newy + 'px';
                     self.inputSymbol.type = 'text';
                     var currentVal = '';
                     for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {

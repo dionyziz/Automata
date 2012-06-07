@@ -94,9 +94,18 @@ $( '.runtoolbar .step' ).click( function() {
                 displayRejectedStatus();
             }
         }
-        else if ( nfaview.nfa.currentStates.length == 0 ) {
-            displayRejectedStatus();
+        else {
+            var emptySet = true;
+            for ( var state in nfaview.nfa.currentStates ) {
+                emptySet = false;
+            }
+            if ( emptySet ) {
+                displayRejectedStatus();
+            }
         }
+    }
+    else {
+        displayRejectedStatus();
     }
     return false;
 } );
