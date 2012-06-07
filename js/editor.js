@@ -529,7 +529,7 @@ NFAEditor.prototype = {
                         self.transitionToChangeName = false;
                     }
                     break;
-                    case 32: //space
+                case 32: //space
                     if ( self.selectedElement[ 0 ] == 'state' ){
                         if ( nfa.accept[ self.selectedElement[ 1 ] ] ){
                             nfa.removeAcceptingState( self.selectedElement[ 1 ] );
@@ -539,36 +539,36 @@ NFAEditor.prototype = {
                         }
                     }
                     break;
-                    case 82: //r -- for run
-                        if ( ( self.mode != 'runMode' )
-                        && ( !renderer.showAlphabet )
-                        && ( nfa.states[ nfa.startState ] )
-                        && ( !renderer.selectionRectShow ) ) {
-                            self.elementDeselected();
-                            self.setRun( true );
-                            renderer.showAlphabet = true;
-                            nfa.reset();
-                            nfa.input = 'abbaabba';
-                        }
-                        // TODO error message if there is no startState
-                        break;
-                    case 34: //page down
-                        if ( !nfa.nextStepByStep() ) {
-                            renderer.showAlphabet = false;
-                            self.setRun( false );
-                        }
+                case 82: //r -- for run
+                    if ( ( self.mode != 'runMode' )
+                    && ( !renderer.showAlphabet )
+                    && ( nfa.states[ nfa.startState ] )
+                    && ( !renderer.selectionRectShow ) ) {
+                        self.elementDeselected();
+                        self.setRun( true );
+                        renderer.showAlphabet = true;
+                        nfa.reset();
+                        nfa.input = 'abbaabba';
+                    }
+                    // TODO error message if there is no startState
                     break;
-                    case 73: // i -- change initial state
-                        if ( self.selectedElement[ 0 ] == 'state' ){
-                            nfa.startState = self.selectedElement[ 1 ];
-                        }
-                        break;
+                case 34: //page down
+                    if ( !nfa.nextStepByStep() ) {
+                        renderer.showAlphabet = false;
+                        self.setRun( false );
+                    }
+                    break;
+                case 73: // i -- change initial state
+                    if ( self.selectedElement[ 0 ] == 'state' ){
+                        nfa.startState = self.selectedElement[ 1 ];
+                    }
+                    break;
             }
         };
         document.onkeyup = function( e ) {
             switch ( e.keyCode ) {
                 case 16: //shift
-                break;
+                    break;
             }
         };
         this.mainLoop();

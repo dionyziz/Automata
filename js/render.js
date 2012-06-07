@@ -123,7 +123,7 @@ NFARenderer.prototype = {
                 var state = stateArray[ i ].state;
                 var outstatesnum = nfa.transitionsnum[ state ];
 
-                for ( var j = 0; j < nfa.numStates; ++ j ) {
+                for ( var j = 0; j < nfa.numStates; ++j ) {
                     var outstring = '';
                     if ( typeof stateArray[ j ] != 'undefined' ) {
                         var to = stateArray[ j ].state;
@@ -133,15 +133,15 @@ NFARenderer.prototype = {
                             }
                         }
 
-                        outstring = outstring.slice(0, -2);
-                        if ( outstring != '' ){
-                            this.renderTransition( state, outstring, to, 1/ 2, true );
+                        outstring = outstring.slice( 0, -2 );
+                        if ( outstring != '' ) {
+                            this.renderTransition( state, outstring, to, 1 / 2, true );
                         }
                     }
                 }
 
                 if ( this.nfaview.newtransitionFrom != false ) {
-                    this.renderTransition( this.nfaview.newtransitionFrom, '$$', false, 1/2, false );
+                    this.renderTransition( this.nfaview.newtransitionFrom, '$$', false, 1 / 2, false );
                 }
 
                 for ( var to in nfa.transitions[ state ][ '$$' ] ) {
@@ -507,7 +507,7 @@ NFARenderer.prototype = {
                             nfaview.states[ state ].position,
                             sigma,
                             nfaview.states[ to ].position,
-                            j / nfa.transitionsnum[ state ]
+                            1 / 2 // j / nfa.transitionsnum[ state ]
                         );
                         if ( test ) {
                             return [ 'transition', [ state, sigma, to ] ];
