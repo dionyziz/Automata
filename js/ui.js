@@ -144,12 +144,9 @@ var UI = {
 
             return false;
         } );
-        $( '.runtoolbar .edit' ).click( function() {
-            // run the final step
-            editor.runStep();
-            $( '.runtoolbar' ).hide();
-            $( '.toolbar' ).show();
-
+        $( '.runner .close' ).click( function() {
+            editor.setRun( false );
+            $( '.runner' ).hide();
             return false;
         } );
 
