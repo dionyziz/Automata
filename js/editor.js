@@ -30,7 +30,7 @@ NFAEditor.prototype = {
     },
     mainLoop: function() {
         this.renderer.render();
-        setTimeout( this.mainLoop.bind( this ), 17 );
+        requestAnimFrame( this.mainLoop.bind( this ) ); 
     },
     elementSelected: function( element ) {
         var oldtype = this.selectedElement[ 0 ];
@@ -92,12 +92,12 @@ NFAEditor.prototype = {
                 this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
                 this.errorSymbol.hidden = true;
                 this.inputSymbol.type = 'hidden';
-                this.renderer.showAlphabet = false;
+                this.renderer.freezeEditor = false;
                 this.transitionToChange = false;
             }
             else {
                 var newx = parseFloat( this.inputSymbol.style.left );
-                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
+                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.offsetHeight ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
                 this.errorSymbol.hidden = false;
@@ -108,7 +108,7 @@ NFAEditor.prototype = {
             this.nfaview.stateName[ this.stateToChangeName ] = newName;
             this.changeStateName.value = '';
             this.changeStateName.type = 'hidden';
-            this.renderer.showAlphabet = false;
+            this.renderer.freezeEditor = false;
             this.stateToChangeName = false;
         }
         else if ( this.transitionToChangeName != false ) {
@@ -139,13 +139,13 @@ NFAEditor.prototype = {
                 }
                 this.errorSymbol.hidden = true;
                 this.inputSymbol.type = 'hidden';
-                this.renderer.showAlphabet = false;
+                this.renderer.freezeEditor = false;
                 this.elementDeselected();
                 this.transitionToChangeName = false;
             }
             else {
                 var newx = parseFloat( this.inputSymbol.style.left );
-                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
+                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.offsetHeight ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
                 this.errorSymbol.hidden = false;
@@ -176,24 +176,30 @@ NFAEditor.prototype = {
     run: function( input ) {
         // TODO: error message if there is no startState
 
-        if ( this.mode != 'runMode'
-          && !this.renderer.showAlphabet
-          && this.nfa.states[ this.nfa.startState ]
+        console.log( 'Running automaton on input ' + input );
+
+        if ( this.nfa.states[ this.nfa.startState ]
           && !this.renderer.selectionRectShow ) {
             this.elementDeselected();
             this.setRun( true );
-            this.renderer.showAlphabet = true;
+            this.renderer.freezeEditor = true;
             this.nfa.reset();
             this.nfa.input = input;
         }
     },
     runStep: function() {
-        if ( !nfa.nextStepByStep() ) {
-            this.renderer.showAlphabet = false;
+        if ( !this.nfa.nextStepByStep() ) {
+            this.renderer.freezeEditor = false;
             this.setRun( false );
             return false;
         }
         return true;
+    },
+    gotoStep: function( input, step ) {
+        this.run( input );
+        for ( var i = 0; i < step; ++i ) {
+            this.runStep();
+        }
     },
     play: function() {
         // TODO: This function is huge and it includes many closures
@@ -401,7 +407,7 @@ NFAEditor.prototype = {
                                    + nfaview.states[ transition[ 2 ] ].position.y ) / 2 )
                                    + ( parseFloat( self.inputSymbol.offsetHeight ) / 2 ) + 20; //TODO fix 20 to samething more general
                         self.transitionToChange = transition;
-                        renderer.showAlphabet = true;
+                        renderer.freezeEditor = true;
                         self.inputSymbol.style.left = '' + newx + 'px' ;
                         self.inputSymbol.style.top = '' + newy + 'px' ;
                         self.inputSymbol.type = 'text';
@@ -462,7 +468,7 @@ NFAEditor.prototype = {
             }
         } );
         renderer.on( 'dblclick', function( e ) {
-            if ( !renderer.showAlphabet ) {
+            if ( !renderer.freezeEditor ) {
                 self.elementDeselected();
                 var client = new Vector( e.clientX, e.clientY )
                 var test = renderer.hitTest( client.minus( renderer.offset ) );
@@ -479,7 +485,7 @@ NFAEditor.prototype = {
                     self.stateToChangeName = test[ 1 ];
                     var newx = nfaview.states[ test[ 1 ] ].position.x - ( parseFloat( self.changeStateName.offsetWidth ) / 2 );
                     var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.offsetHeight ) / 2 );
-                    renderer.showAlphabet = true;
+                    renderer.freezeEditor = true;
                     self.changeStateName.style.left = newx + 'px';
                     self.changeStateName.style.top = newy + 'px';
                     self.changeStateName.type = 'text';
@@ -493,10 +499,10 @@ NFAEditor.prototype = {
                                 - ( parseFloat( self.inputSymbol.offsetWidth ) / 2 );
                     var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y
                                 + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
-                                + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; // TODO fix 20 to something more general
-                    renderer.showAlphabet = true;
-                    self.inputSymbol.style.left = '' + newx + 'px';
-                    self.inputSymbol.style.top = '' + newy + 'px';
+                                + ( parseFloat( self.inputSymbol.offsetHeight ) / 2 ) + 20; // TODO fix 20 to something more general
+                    renderer.freezeEditor = true;
+                    self.inputSymbol.style.left = newx + 'px';
+                    self.inputSymbol.style.top = newy + 'px';
                     self.inputSymbol.type = 'text';
                     var currentVal = '';
                     for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {
@@ -542,20 +548,20 @@ NFAEditor.prototype = {
                         nfa.deleteTransition( self.transitionToChange[ 0 ], self.transitionToChange[ 1 ], self.transitionToChange[ 2 ] );
                         self.errorSymbol.hidden = true;
                         self.inputSymbol.type = 'hidden';
-                        renderer.showAlphabet = false;
+                        renderer.freezeEditor = false;
                         self.transitionToChange = false;
                     }
                     else if ( self.stateToChangeName != false ) {
                         self.changeStateName.value = '';
                         self.changeStateName.type = 'hidden';
-                        renderer.showAlphabet = false;
+                        renderer.freezeEditor = false;
                         self.stateToChangeName = false;
                     }
                     else if ( self.transitionToChangeName != false ) {
                         self.inputSymbol.value = '';
                         self.errorSymbol.hidden = true;
                         self.inputSymbol.type = 'hidden';
-                        renderer.showAlphabet = false;
+                        renderer.freezeEditor = false;
                         self.transitionToChangeName = false;
                     }
                     break;
@@ -582,6 +588,16 @@ NFAEditor.prototype = {
                     break;
             }
         };
+        window.requestAnimFrame = ( function() {
+            return window.requestAnimationFrame
+                || window.webkitRequestAnimationFrame
+                || window.mozRequestAnimationFrame
+                || window.oRequestAnimationFrame
+                || window.msRequestAnimationFrame
+                || function( callback ) {
+                       window.setTimeout( callback, 1000 / 60 );
+                   };
+        } )();
         this.mainLoop();
     }
 };

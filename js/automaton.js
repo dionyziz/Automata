@@ -103,6 +103,8 @@ NFA.prototype = {
         this.accept[ state ] = false;
     },
     reset: function() {
+        console.log( 'NFA reset' );
+
         assert( this.numStates > 0 );
         assert( typeof this.states[ this.startState ] != 'undefined' );
         this.currentStates = {};
@@ -172,6 +174,12 @@ NFA.prototype = {
             return false;
         }
         return false;
+    },
+    gotoStep: function( step ) {
+        this.reset();
+        for ( var i = 0; i < step; ++i ) {
+            this.nextStepByStep();
+        }
     }
 };
 NFA.extend( EventEmitter );
