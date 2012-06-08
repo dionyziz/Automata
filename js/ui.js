@@ -82,34 +82,41 @@ var UI = {
             beginRunning();
             return false;
         } );
-        $( '.runner .next' ).click( function() {
-            if ( editor.runStep() ) {
-                ++self.runStep;
-                self.displayRunStatus();
-                if ( self.runStep == self.inputString.length ) {
-                    var accepting = false;
+        function displayAcceptanceResult() {
+            if ( self.runStep == self.inputString.length ) {
+                var accepting = false;
 
-                    for ( var state in nfaview.nfa.currentStates ) {
-                        if ( nfaview.nfa.accept[ state ] ) {
-                            accepting = true;
-                            break;
-                        }
-                    }
-                    if ( accepting ) {
-                        self.displayAcceptedStatus();
-                    }
-                    else {
-                        self.displayRejectedStatus();
+                for ( var state in nfaview.nfa.currentStates ) {
+                    if ( nfaview.nfa.accept[ state ] ) {
+                        accepting = true;
+                        break;
                     }
                 }
-                else if ( nfaview.nfa.currentStates.length == 0 ) {
+                if ( accepting ) {
+                    self.displayAcceptedStatus();
+                }
+                else {
                     self.displayRejectedStatus();
                 }
+            }
+            else if ( nfaview.nfa.currentStates.length == 0 ) {
+                self.displayRejectedStatus();
+            }
+        }
+        $( '.runner .next' ).click( function() {
+            ++self.runStep;
+            if ( self.runStep > self.inputString.length ) {
+                self.runStep = self.inputString.length;
+                return false;
+            }
+
+            if ( editor.runStep() ) {
+                self.displayRunStatus();
+                displayAcceptanceResult();
             }
             else {
                 self.displayRejectedStatus();
             }
-
             return false;
         } );
         $( '.runner .rewind' ).click( function() {
@@ -133,6 +140,7 @@ var UI = {
             self.runStep = self.inputString.length;
             editor.gotoStep( self.inputString, self.runStep );
             self.displayRunStatus();
+            displayAcceptanceResult();
 
             return false;
         } );
