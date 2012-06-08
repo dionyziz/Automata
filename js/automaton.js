@@ -33,6 +33,14 @@ function NFA( alphabet ) {
 
 NFA.prototype = {
     constructor: NFA,
+    addSymbol: function( sigma ) {
+        this.alphabet[ sigma ] = true;
+        for ( var state in this.states ) {
+            this.transitions[ state ][ sigma ] = {};
+        }
+
+        this.emit( 'symboladded', sigma );
+    },
     addTransition: function( from, via, to ) {
         if ( via != '$$' ) {
             if ( typeof this.alphabet[ via ] == 'undefined' ) {

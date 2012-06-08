@@ -17,6 +17,7 @@ NFAEditor.prototype = {
     transitionToChangeName: false,
     mode: 'moveState',
     selectedRectStates : false,
+    shiftPressed : false,
     setRun: function ( mode ) {
         this.renderer.runMode = mode;
         this.renderer.flush = 0;
@@ -223,6 +224,20 @@ NFAEditor.prototype = {
         renderer.on( 'mouseouttransition', transitionOut );
         renderer.on( 'mouseoutstate', stateOut );
         renderer.on( 'mousedownstate', function( state, e ) {
+
+            if( self.shiftPressed ) {
+                if ( self.selectedElement[ 1 ] != state ) {
+                    if ( self.selectedElement[ 0 ] == 'state' ) {
+                        self.selectedRectStates[ self.selectedElement[ 1 ] ] = self.selectedElement[ 1 ];
+                        nfaview.states[ self.selectedElement[ 1 ] ].importance = 'strong';
+                    }
+
+                    self.selectedRectStates[ state ] = state;
+                    nfaview.states[ state ].importance = 'strong';
+                    return;
+                }
+            }
+
             var client = new Vector( e.clientX, e.clientY );
 
             self.dragging = true;
@@ -268,7 +283,9 @@ NFAEditor.prototype = {
             renderer.removeListener( 'mouseouttransition', transitionOut );
 
             if ( self.mode == 'moveState' ) {
-                self.elementSelected( [ 'state', state ] );
+                if ( self.selectedRectStates[ state ] != state ) {
+                    self.elementSelected( [ 'state', state ] );
+                }
             }
             else if ( self.mode == 'createTransition' ) {
                 nfaview.newtransitionFrom = state;
@@ -529,7 +546,7 @@ NFAEditor.prototype = {
                         self.transitionToChangeName = false;
                     }
                     break;
-                    case 32: //space
+                case 32: //space
                     if ( self.selectedElement[ 0 ] == 'state' ){
                         if ( nfa.accept[ self.selectedElement[ 1 ] ] ){
                             nfa.removeAcceptingState( self.selectedElement[ 1 ] );
@@ -539,7 +556,7 @@ NFAEditor.prototype = {
                         }
                     }
                     break;
-                    case 82: //r -- for run
+                case 82: //r -- for run
                         if ( ( self.mode != 'runMode' )
                         && ( !renderer.showAlphabet )
                         && ( nfa.states[ nfa.startState ] )
@@ -552,23 +569,27 @@ NFAEditor.prototype = {
                         }
                         // TODO error message if there is no startState
                         break;
-                    case 34: //page down
+                case 34: //page down
                         if ( !nfa.nextStepByStep() ) {
                             renderer.showAlphabet = false;
                             self.setRun( false );
                         }
                     break;
-                    case 73: // i -- change initial state
-                        if ( self.selectedElement[ 0 ] == 'state' ){
-                            nfa.startState = self.selectedElement[ 1 ];
-                        }
-                        break;
+                case 73: // i -- change initial state
+                    if ( self.selectedElement[ 0 ] == 'state' ){
+                        nfa.startState = self.selectedElement[ 1 ];
+                    }
+                    break;
+                case 16: //shift
+                    self.shiftPressed = true;
+                    break;
             }
         };
         document.onkeyup = function( e ) {
             switch ( e.keyCode ) {
                 case 16: //shift
-                break;
+                    self.shiftPressed = false;
+                    break;
             }
         };
         this.mainLoop();

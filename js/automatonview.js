@@ -90,4 +90,9 @@ function NFAView( nfa ) {
         delete self.transitions[ from ][ via ][ to ];
         delete self.invtransitions[ from ][ to ][ via ];
     } );
+    this.nfa.on( 'symboladded' , function( sigma ) {
+        for ( var state in nfa.states ) {
+            self.transitions[ state ][ sigma ] = {};
+        }
+    } );
 }
