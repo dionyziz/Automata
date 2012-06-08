@@ -31,7 +31,7 @@ NFAEditor.prototype = {
     },
     mainLoop: function() {
         this.renderer.render();
-        setTimeout( this.mainLoop.bind( this ), 17 );
+        requestAnimFrame( this.mainLoop.bind( this ) ); 
     },
     elementSelected: function( element ) {
         var oldtype = this.selectedElement[ 0 ];
@@ -93,12 +93,11 @@ NFAEditor.prototype = {
                 this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
                 this.errorSymbol.hidden = true;
                 this.inputSymbol.type = 'hidden';
-                this.renderer.showAlphabet = false;
                 this.transitionToChange = false;
             }
             else {
                 var newx = parseFloat( this.inputSymbol.style.left );
-                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
+                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.offsetHeight ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
                 this.errorSymbol.hidden = false;
@@ -109,7 +108,6 @@ NFAEditor.prototype = {
             this.nfaview.stateName[ this.stateToChangeName ] = newName;
             this.changeStateName.value = '';
             this.changeStateName.type = 'hidden';
-            this.renderer.showAlphabet = false;
             this.stateToChangeName = false;
         }
         else if ( this.transitionToChangeName != false ) {
@@ -140,13 +138,12 @@ NFAEditor.prototype = {
                 }
                 this.errorSymbol.hidden = true;
                 this.inputSymbol.type = 'hidden';
-                this.renderer.showAlphabet = false;
                 this.elementDeselected();
                 this.transitionToChangeName = false;
             }
             else {
                 var newx = parseFloat( this.inputSymbol.style.left );
-                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
+                var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.offsetHeight ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
                 this.errorSymbol.hidden = false;
@@ -174,7 +171,40 @@ NFAEditor.prototype = {
          && same( this.selectedElement[ 1 ], transition )
         return ret;
     },
+    run: function( input ) {
+        // TODO: error message if there is no startState
+
+        console.log( 'Running automaton on input ' + input );
+
+        if ( this.nfa.states[ this.nfa.startState ]
+          && !this.renderer.selectionRectShow ) {
+            this.elementDeselected();
+            this.setRun( true );
+            this.nfa.reset();
+            this.nfa.input = input;
+        }
+    },
+    runStep: function() {
+        if ( !this.nfa.nextStepByStep() ) {
+            this.setRun( false );
+            return false;
+        }
+        return true;
+    },
+    gotoStep: function( input, step ) {
+        this.run( input );
+        for ( var i = 0; i < step; ++i ) {
+            this.runStep();
+        }
+    },
     play: function() {
+        // TODO: This function is huge and it includes many closures
+        //       which long-term can cause garbage collection issues.
+        //       We need to split this into individual functions with
+        //       no environment frames refering to local variables.
+        //       In particular, the events the renderer fires are better
+        //       written as separate functions of the editor object, not
+        //       as closures.
         var nfa = this.nfa;
         var renderer = this.renderer;
         var canvas = this.canvas;
@@ -216,8 +246,10 @@ NFAEditor.prototype = {
         } );
         function transitionOut( transition ) {
             if ( !self.isTransitionSelected( transition ) ) {
-                nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ].importance = 'normal';
-                nfaview.viewtransitions[ transition[ 0 ] ][ transition[ 2 ] ].importance = 'normal';
+                if ( typeof nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ] !== 'undefined' ) {
+                    nfaview.transitions[ transition[ 0 ] ][ transition[ 1 ] ][ transition[ 2 ] ].importance = 'normal';
+                    nfaview.viewtransitions[ transition[ 0 ] ][ transition[ 2 ] ].importance = 'normal';
+                }
             }
             canvas.style.cursor = 'default';
         }
@@ -383,12 +415,11 @@ NFAEditor.prototype = {
                     if ( transition[ 1 ] == '$$' ) {
                         var newx = ( ( nfaview.states[ transition[ 0 ] ].position.x
                                    + nfaview.states[ transition[ 2 ] ].position.x ) / 2 )
-                                   - ( parseFloat( self.inputSymbol.style.width ) / 2 );
+                                   - ( parseFloat( self.inputSymbol.offsetWidth ) / 2 );
                         var newy = ( ( nfaview.states[ transition[ 0 ] ].position.y
                                    + nfaview.states[ transition[ 2 ] ].position.y ) / 2 )
-                                   + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; //TODO fix 20 to samething more general
+                                   + ( parseFloat( self.inputSymbol.offsetHeight ) / 2 ) + 20; //TODO fix 20 to samething more general
                         self.transitionToChange = transition;
-                        renderer.showAlphabet = true;
                         self.inputSymbol.style.left = '' + newx + 'px' ;
                         self.inputSymbol.style.top = '' + newy + 'px' ;
                         self.inputSymbol.type = 'text';
@@ -449,50 +480,46 @@ NFAEditor.prototype = {
             }
         } );
         renderer.on( 'dblclick', function( e ) {
-            if ( !renderer.showAlphabet ) {
-                self.elementDeselected();
-                var client = new Vector( e.clientX, e.clientY )
-                var test = renderer.hitTest( client.minus( renderer.offset ) );
-                if ( !test ) {
-                    var newState = 'q_' + nfaview.nfa.nextnumState;
+            self.elementDeselected();
+            var client = new Vector( e.clientX, e.clientY )
+            var test = renderer.hitTest( client.minus( renderer.offset ) );
+            if ( !test ) {
+                var newState = 'q_' + nfaview.nfa.nextnumState;
 
-                    nfaview.nfa.addState( newState );
-                    nfaview.states[ newState ].position = new Vector(
-                        e.clientX - this.offset.x,
-                        e.clientY - this.offset.y
-                    );
+                nfaview.nfa.addState( newState );
+                nfaview.states[ newState ].position = new Vector(
+                    e.clientX - this.offset.x,
+                    e.clientY - this.offset.y
+                );
+            }
+            else if ( test[ 0 ] == 'state' ) {
+                self.stateToChangeName = test[ 1 ];
+                var newx = nfaview.states[ test[ 1 ] ].position.x - ( parseFloat( self.changeStateName.offsetWidth ) / 2 );
+                var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.offsetHeight ) / 2 );
+                self.changeStateName.style.left = newx + 'px';
+                self.changeStateName.style.top = newy + 'px';
+                self.changeStateName.type = 'text';
+                self.changeStateName.value = nfaview.stateName[ test[ 1 ] ];
+                self.changeStateName.focus();
+            }
+            else if ( test[ 0 ] == 'transition' ) {
+                self.transitionToChangeName = test[ 1 ];
+                var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x
+                            + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.x ) / 2 )
+                            - ( parseFloat( self.inputSymbol.offsetWidth ) / 2 );
+                var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y
+                            + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
+                            + ( parseFloat( self.inputSymbol.offsetHeight ) / 2 ) + 20; // TODO fix 20 to something more general
+                self.inputSymbol.style.left = newx + 'px';
+                self.inputSymbol.style.top = newy + 'px';
+                self.inputSymbol.type = 'text';
+                var currentVal = '';
+                for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {
+                    currentVal += symbol + ',';
                 }
-                else if ( test[ 0 ] == 'state' ){
-                    self.stateToChangeName = test[ 1 ];
-                    var newx = nfaview.states[ test[ 1 ] ].position.x - ( parseFloat( self.changeStateName.style.width ) / 2 );
-                    var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.style.height ) / 2 );
-                    renderer.showAlphabet = true;
-                    self.changeStateName.style.left = '' + newx + 'px' ;
-                    self.changeStateName.style.top = '' + newy + 'px' ;
-                    self.changeStateName.type = 'text';
-                    self.changeStateName.value = nfaview.stateName[ test[ 1 ] ];
-                    self.changeStateName.focus();
-                }
-                else if ( test[ 0 ] == 'transition' ){
-                    self.transitionToChangeName = test[ 1 ];
-                    var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x
-                                + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.x ) / 2 )
-                                - ( parseFloat( self.inputSymbol.style.width ) / 2 );
-                    var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y
-                                + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
-                                + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; // TODO fix 20 to something more general
-                    renderer.showAlphabet = true;
-                    self.inputSymbol.style.left = '' + newx + 'px' ;
-                    self.inputSymbol.style.top = '' + newy + 'px' ;
-                    self.inputSymbol.type = 'text';
-                    var currentVal = '';
-                    for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {
-                        currentVal += symbol + ',';
-                    }
-                    currentVal = currentVal.slice(0, -1);
-                    self.inputSymbol.value = currentVal;
-                    self.inputSymbol.focus();
-                }
+                currentVal = currentVal.slice(0, -1);
+                self.inputSymbol.value = currentVal;
+                self.inputSymbol.focus();
             }
         } );
         document.onkeydown = function( e ) {
@@ -529,25 +556,22 @@ NFAEditor.prototype = {
                         nfa.deleteTransition( self.transitionToChange[ 0 ], self.transitionToChange[ 1 ], self.transitionToChange[ 2 ] );
                         self.errorSymbol.hidden = true;
                         self.inputSymbol.type = 'hidden';
-                        renderer.showAlphabet = false;
                         self.transitionToChange = false;
                     }
                     else if ( self.stateToChangeName != false ) {
                         self.changeStateName.value = '';
                         self.changeStateName.type = 'hidden';
-                        renderer.showAlphabet = false;
                         self.stateToChangeName = false;
                     }
                     else if ( self.transitionToChangeName != false ) {
                         self.inputSymbol.value = '';
                         self.errorSymbol.hidden = true;
                         self.inputSymbol.type = 'hidden';
-                        renderer.showAlphabet = false;
                         self.transitionToChangeName = false;
                     }
                     break;
                 case 32: //space
-                    if ( self.selectedElement[ 0 ] == 'state' ){
+                    if ( self.selectedElement[ 0 ] == 'state' ) {
                         if ( nfa.accept[ self.selectedElement[ 1 ] ] ){
                             nfa.removeAcceptingState( self.selectedElement[ 1 ] );
                         }
@@ -555,25 +579,6 @@ NFAEditor.prototype = {
                             nfa.addAcceptingState( self.selectedElement[ 1 ] );
                         }
                     }
-                    break;
-                case 82: //r -- for run
-                        if ( ( self.mode != 'runMode' )
-                        && ( !renderer.showAlphabet )
-                        && ( nfa.states[ nfa.startState ] )
-                        && ( !renderer.selectionRectShow ) ) {
-                            self.elementDeselected();
-                            self.setRun( true );
-                            renderer.showAlphabet = true;
-                            nfa.reset();
-                            nfa.input = 'abbaabba';
-                        }
-                        // TODO error message if there is no startState
-                        break;
-                case 34: //page down
-                        if ( !nfa.nextStepByStep() ) {
-                            renderer.showAlphabet = false;
-                            self.setRun( false );
-                        }
                     break;
                 case 73: // i -- change initial state
                     if ( self.selectedElement[ 0 ] == 'state' ){
@@ -592,6 +597,16 @@ NFAEditor.prototype = {
                     break;
             }
         };
+        window.requestAnimFrame = ( function() {
+            return window.requestAnimationFrame
+                || window.webkitRequestAnimationFrame
+                || window.mozRequestAnimationFrame
+                || window.oRequestAnimationFrame
+                || window.msRequestAnimationFrame
+                || function( callback ) {
+                       window.setTimeout( callback, 1000 / 60 );
+                   };
+        } )();
         this.mainLoop();
     }
 };

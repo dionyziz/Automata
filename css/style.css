@@ -54,36 +54,40 @@ header {
     content: '';
     padding: 0;
 }
-.toolbar {
+ol {
     list-style: none;
     margin: 0;
+    padding: 0;
+}
+.toolbar, .runtoolbar {
     padding: 4px 2px;
     height: 30px;
     float: left;
 }
-.toolbar li {
+.button {
     display: block;
     float: left;
     border: 1px solid transparent;
     border-radius: 3px;
     margin: 0 1px;
+    height: 28px;
 }
-.toolbar li a {
+.button a {
     padding: 4px 7px 5px 7px;
     text-decoration: none;    
     color: black;
     display: block;
 }
-.toolbar .selected {
+.button.selected {
     border: 1px solid #c29037;
 }
-.toolbar li:hover {
+.button:hover {
     border: 1px solid #f3d24f;
 }
-.toolbar li a {
+.button a {
     border: 1px solid transparent;
 }
-.toolbar li:hover a {
+.button:hover a {
     border: 1px solid #fdf5d9;
     background-image: linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
     background-image: -o-linear-gradient(bottom, rgb(252,237,179) 1%, rgb(252,227,134) 89%, rgb(255,255,255) 100%);
@@ -100,7 +104,7 @@ header {
         color-stop(1, rgb(255,255,255))
     );
 }
-.toolbar .selected a, .toolbar li:active a {
+.button.selected a, .button:active a {
     background-image: linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
     background-image: -o-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
     background-image: -moz-linear-gradient(bottom, rgb(255,244,128) 0%, rgb(255,230,117) 100%);
@@ -116,7 +120,7 @@ header {
     );
     border-radius: 3px;
 }
-.toolbar li span {
+.button span {
     background-repeat: no-repeat;
     display: block;
     width: 20px;
@@ -125,12 +129,40 @@ header {
     position: relative;
     top: 2px;
 }
-.toolbar .move span {
+.move.button span {
     background-image: url( '../images/hand.png' );
 }
-.toolbar .transition span {
+.transition.button span {
     background-image: url( '../images/layer-shape-line.png' );
 }
-.toolbar .share span {
+.share.button span {
     background-image: url( '../images/chain.png' );
+}
+.run.button span {
+    background-image: url( '../images/control.png' );
+}
+.next.button span {
+    background-image: url( '../images/control.png' );
+}
+.prev.button span {
+    background-image: url( '../images/control-180.png' );
+}
+.rewind.button span {
+    background-image: url( '../images/control-stop-180.png' );
+}
+.fastforward.button span {
+    background-image: url( '../images/control-stop.png' );
+}
+.edit.button span {
+    background-image: url( '../images/pencil.png' );
+}
+#inputSymbol {
+    position: absolute;
+    height: 20px;
+    width: 80px;
+}
+#changeStateName {
+    position: absolute;
+    height: 30px;
+    width: 30px;
 }

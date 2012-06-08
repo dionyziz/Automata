@@ -111,6 +111,8 @@ NFA.prototype = {
         this.accept[ state ] = false;
     },
     reset: function() {
+        console.log( 'NFA reset' );
+
         assert( this.numStates > 0 );
         assert( typeof this.states[ this.startState ] != 'undefined' );
         this.currentStates = {};
@@ -124,8 +126,8 @@ NFA.prototype = {
         this.reset();
 
         if ( this.states[ this.startState ] ) {
-            while (     input.length
-                    &&  this.currentStates.length ) {
+            while ( input.length
+                 && this.currentStates.length ) {
                 this.next( input[ 0 ] );
                 input = input.substr( 1 );
             }
@@ -160,13 +162,13 @@ NFA.prototype = {
             changeFlag = false;
             for ( var state in this.currentStates ) {
                 for ( var to in this.transitions[ state ][ 'ε' ] ) {
-                    if ( ! ( to in this.currentStates ) ) {
+                    if ( !( to in this.currentStates ) ) {
                         changeFlag = true;
                         this.currentStates[ to ] = to;
                     }
                 }
             }
-        } while( changeFlag );
+        } while ( changeFlag );
     },
     nextStepByStep: function() {
         // function for the step by step running
@@ -179,8 +181,12 @@ NFA.prototype = {
             }
             return false;
         }
-        else {
-            return false;
+        return false;
+    },
+    gotoStep: function( step ) {
+        this.reset();
+        for ( var i = 0; i < step; ++i ) {
+            this.nextStepByStep();
         }
     }
 };

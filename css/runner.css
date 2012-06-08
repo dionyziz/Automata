@@ -1,0 +1,92 @@
+.runner {
+    display: none;
+    border: 1px solid #aaa;
+    width: 500px;
+    position: absolute;
+    bottom: 0;
+    left: 50%;
+    margin-left: -250px;
+    padding: 10px;
+    border-radius: 10px;
+    border-bottom-style: none;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+    box-shadow: 0 0 9px -3px black;
+    background-color: #f1f3f4;
+}
+.runner li span {
+    width: 15px;
+}
+#runstatus {
+    text-align: center;
+    margin: 0;
+    font-size: 100%;
+}
+.runner li a {
+    width: 15px;
+    height: 17px;
+}
+.runner .fastforward, .runner .next {
+    float: right;
+}
+#runinput {
+    text-align: center;
+    margin: 20px 0;
+}
+#runinput li {
+    display: inline-block;
+    background-repeat: no-repeat;
+    background-position: 3px 20px;
+    width: 20px;
+    height: 40px;
+}
+#runinput .state.selected {
+    background-image: url( '../images/ui-radio-button.png' );
+    background-color: blueviolet;
+    box-shadow: 0 0 8px 0px blueviolet;
+}
+#runinput .state {
+    background-image: url( '../images/ui-radio-button-uncheck.png' );
+    height: 20px;
+    position: relative;
+    top: 17px;
+    background-position: 2px 2px;
+    border-radius: 20px;
+}
+#runinput .transition {
+    background-image: url( '../images/arrow-000-small.png' );
+}
+.runner h2 {
+    padding: 4px 20px 0 4px;
+    margin: 0;
+    font-size: 100%;
+    line-height: 23px;
+    font-weight: normal;
+    font-weight: bold;
+}
+.runner h2.accept {
+    background-image: url( '../images/tick-circle-frame.png' );
+}
+.runner h2.reject {
+    background-image: url( '../images/cross-circle-frame.png' );
+}
+.runner h2.icon {
+    background-repeat: no-repeat;
+    background-position: 204px 8px;
+    padding-left: 28px;
+}
+.close {
+    position: absolute;
+    top: -10px;
+    right: -10px;
+    padding: 5px;
+    display: block;
+    background-image: url( '../images/cross-small.png' );
+    background-repeat: no-repeat;
+    background-position: 5px 5px;
+    width: 16px;
+    height: 16px;
+}
+.window {
+    position: relative;
+}

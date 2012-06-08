@@ -75,7 +75,7 @@ NFARenderer.prototype = {
     ARROW_ANGLE: Math.PI / 6,
     SELF_TRANSITION_RADIUS: 20,
     constructor: NFARenderer,
-    showAlphabet: false,
+    freezeEditor: false,
     mode : 'moveState',
     runMode : false,
     flush: 0,
@@ -123,7 +123,7 @@ NFARenderer.prototype = {
                 var state = stateArray[ i ].state;
                 var outstatesnum = nfa.transitionsnum[ state ];
 
-                for ( var j = 0; j < nfa.numStates; ++ j ) {
+                for ( var j = 0; j < nfa.numStates; ++j ) {
                     var outstring = '';
                     if ( typeof stateArray[ j ] != 'undefined' ) {
                         var to = stateArray[ j ].state;
@@ -133,19 +133,19 @@ NFARenderer.prototype = {
                             }
                         }
 
-                        outstring = outstring.slice(0, -2);
-                        if ( outstring != '' ){
-                            this.renderTransition( state, outstring, to, 1/ 2, true );
+                        outstring = outstring.slice( 0, -2 );
+                        if ( outstring != '' ) {
+                            this.renderTransition( state, outstring, to, true );
                         }
                     }
                 }
 
                 if ( this.nfaview.newtransitionFrom != false ) {
-                    this.renderTransition( this.nfaview.newtransitionFrom, '$$', false, 1/2, false );
+                    this.renderTransition( this.nfaview.newtransitionFrom, '$$', false, false );
                 }
 
                 for ( var to in nfa.transitions[ state ][ '$$' ] ) {
-                    this.renderTransition( state, '$$', to, j / outstatesnum, false );
+                    this.renderTransition( state, '$$', to, false );
                     ++j;
                 }
 
@@ -193,9 +193,8 @@ NFARenderer.prototype = {
         var radgrad = ctx.createRadialGradient( 0, 0, 0, 0, 0, this.STATE_RADIUS );
 
         ctx.save();
-        if ( this.runMode && ( this.nfaview.nfa.currentStates[ state ] == state ) ) {
-
-            if ( !this.nfaview.nfa.accept[ state] ) {
+        if ( this.runMode && this.nfaview.nfa.currentStates[ state ] == state ) {
+            if ( !this.nfaview.nfa.accept[ state ] ) {
                 radgrad.addColorStop( 0, '#ff9999' );
                 radgrad.addColorStop( 0.8, '#ff3030' );
                 radgrad.addColorStop( 1, '#ff9999' );
@@ -369,9 +368,11 @@ NFARenderer.prototype = {
             ctx.restore();
         }
     },
-    renderTransition: function( from, via, to, angle, showText ) {
+    renderTransition: function( from, via, to, showText ) {
         var strokeStyle = 'black';
         var ctx = this.ctx;
+        var angle = 1 / 2;
+
         if ( to == false ) {
             var transitionView = this.nfaview.newtransition;
         }
@@ -491,7 +492,7 @@ NFARenderer.prototype = {
         var test = false;
         var alphabetsize = 0;
 
-        if ( !this.showAlphabet ){
+        if ( !this.freezeEditor ){
             for ( var state in this.nfaview.states ) {
                 test = this.hitTestState( mouse, state, nfaview.states[ state ].position );
                 if ( test ) {
@@ -506,8 +507,7 @@ NFARenderer.prototype = {
                             mouse,
                             nfaview.states[ state ].position,
                             sigma,
-                            nfaview.states[ to ].position,
-                            j / nfa.transitionsnum[ state ]
+                            nfaview.states[ to ].position
                         );
                         if ( test ) {
                             return [ 'transition', [ state, sigma, to ] ];
@@ -524,14 +524,13 @@ NFARenderer.prototype = {
 
         return d.length() < this.STATE_RADIUS;
     },
-    hitTestTransition: function( mouse, from, via, to, angle ) {
+    hitTestTransition: function( mouse, from, via, to ) {
         var arrowhead;
 
         if ( from == to ) {
-            angle *= 2 * Math.PI;
-            var offset = Vector.fromPolar( this.STATE_RADIUS, angle );
+            var offset = Vector.fromPolar( this.STATE_RADIUS, Math.PI );
             var start = from.minus( offset );
-            var center = start.minus( Vector.fromPolar( ( 1 / 2 ) * this.SELF_TRANSITION_RADIUS, angle ) );
+            var center = start.minus( Vector.fromPolar( ( 1 / 2 ) * this.SELF_TRANSITION_RADIUS, Math.PI ) );
             var d = from.minus( center );
             var D = d.length();
             var r1 = this.SELF_TRANSITION_RADIUS;
@@ -540,7 +539,7 @@ NFARenderer.prototype = {
             var d1 = ( D * D - r2 * r2 + r1 * r1 ) / ( 2 * D );
             var k = D * D + r1 * r1 - r2 * r2;
             var h = Math.sqrt( r1 * r1 - k * k / ( 4 * D * D ) );
-            var intersect = center.plus( Vector.fromPolar( d1, angle ) ).plus( Vector.fromPolar( h, angle ).rotate( Math.PI / 2 ) );
+            var intersect = center.plus( Vector.fromPolar( d1, Math.PI ) ).plus( Vector.fromPolar( h, Math.PI ).rotate( Math.PI / 2 ) );
             arrowhead = intersect;
         }
         else {

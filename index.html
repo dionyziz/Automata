@@ -3,7 +3,9 @@
     <head>
         <meta charset="utf-8" />
         <title>Automata</title>
+        <link rel="icon" type="image/png" href="images/layer-shape-curve.png" />
         <link href='css/style.css' rel='stylesheet' />
+        <link href='css/runner.css' rel='stylesheet' />
     </head>
     <body>
         <header>
@@ -16,22 +18,36 @@
                 and try again.</p>
             </noscript>
             <ol class='toolbar'>
-                <li class='move selected'><a href=''><span></span>Move states</a></li>
-                <li class='transition'><a href=''><span></span>Create transition</a></li>
-                <li class='share'><a href=''><span></span>Share</a></li>
+                <li class='selected move button'><a href=''><span></span>Move states</a></li>
+                <li class='transition button'><a href=''><span></span>Create transition</a></li>
+                <li class='run button'><a href=''><span></span>Run</a></li>
+                <!-- <li class='share button'><a href=''><span></span>Share</a></li> -->
             </ol>
+            <!--
             <ol class='account'>
                 <li><a href=''><img src='images/dio.jpg' class='avatar' width='27' height='27' /> dionyziz</a></li>
                 <li><a href=''>Sign out</a></li>
             </ol>
+            -->
             <div class='eof'></div>
         </header>
-        <div id='filemanager'>
+        <div class='runner'>
+            <div class='window'>
+                <a href='' class='close' title='Stop automaton execution'></a>
+                <h2 id='runstatus'>Running</h2>
+                <ol id='runinput'></ol>
+                <ol>
+                    <li class='rewind button'><a href='' title='Restart automaton'><span></span></a></li>
+                    <li class='prev button'><a href='' title='Step backward'><span></span></a></li>
+                    <li class='fastforward button' title='Finish execution'><a href=''><span></span></a></li>
+                    <li class='next button'><a href='' title='Step forward'><span></span></a></li>
+                </ol>
+            </div>
         </div>
         <div id='editor'>
             <label for="insertError" style="position:absolute; height:10px; color:red; font:bold 14px Georgia, serif; width:100px; left:200px; top:200px;" id="errorSymbol" hidden="hidden">Wrong symbol!</label>
-            <input type="hidden" size=8 id="inputSymbol" style="position:absolute; height:20px; width:80px; left:200px; top:200px;" autofocus="autofocus"/>
-            <input type="hidden" size=8 id="changeStateName" style="position:absolute; height:30px; width:30px; left:200px; top:200px;" autofocus="autofocus"/>
+            <input type="hidden" size='8' style='left:0px;top:0px' id="inputSymbol" />
+            <input type="hidden" size='8' style='left:0px;top:0px' id="changeStateName" />
             <canvas width='800' height='800'></canvas>
         </div>
         <script src='js/debug.js'></script>
