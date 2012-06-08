@@ -1,9 +1,27 @@
 from bottle import Bottle, route, run, debug, request
-from os import listdir
+from os import listdir, path
 import models.db
-import settings
+import ConfigParser
 
-# models.db.db( settings.host, settings.user, settings.passwd, settings.name )
+config = ConfigParser.RawConfigParser()
+
+if path.exists( 'automata-local.cfg' ):
+    print( 'Using configuration file automata-local.cfg' )
+    config.read( 'automata-local.cfg' )
+elif path.exists( 'automata.cfg' ):
+    print( 'Using configuration file automata.cfg' )
+    config.read( 'automata.cfg' )
+else:
+    raise NameError( 'Automata is not configured' )
+
+def initdb():
+    hostname = config.get( 'db', 'hostname' )
+    username = config.get( 'db', 'username' )
+    password = config.get( 'db', 'password' )
+    database = config.get( 'db', 'database' )
+    models.db.init( hostname, username, password, database )
+
+initdb()
 
 app = Bottle()
 

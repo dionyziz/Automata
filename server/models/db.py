@@ -1,9 +1,12 @@
 import _mysql
-import settings
 
-class db:
-    def __init__( self, host, user, passwd, name ):
-        self.conn = _mysql.connect( host = host, user = user, passwd = passwd, db = name )
+class Database:
+    def __init__( self, hostname, username, password, database ):
+        self.hostname = hostname
+        self.username = username
+        self.database = database
+
+        self.conn = _mysql.connect( host = hostname, user = username, passwd = password, db = database )
 
     def close( self ):
         self.conn.close()
@@ -14,3 +17,17 @@ class db:
 
     def array( self, sql ):
         return db( conn, sql ).fetch_row( maxrows = 0, how = 1 )
+
+db = None
+
+def getdb():
+    global db
+
+    if db is None:
+        raise NameError( 'Database has not been initialized' )
+    return db
+
+def init( hostname, username, password, database ):
+    global db
+
+    db = Database( hostname, username, password, database )
