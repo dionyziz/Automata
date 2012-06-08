@@ -26,6 +26,7 @@ var UI = {
         this.canvas.height = window.innerHeight - 39;
     },
     init: function() {
+        // TODO: nfaview should not be a global variable here
         var editor;
 
         this.canvas = document.getElementsByTagName( 'canvas' )[ 0 ];
@@ -79,6 +80,16 @@ var UI = {
 
         $( '.toolbar .run' ).click( function() {
             self.inputString = prompt( 'Enter input string: ', 'abba' );
+
+            if ( typeof self.inputString != 'string' ) {
+                return false;
+            }
+            for ( var i = 0; i < self.inputString.length; ++i ) {
+                if ( !( self.inputString[ i ] in nfaview.nfa.alphabet ) ) {
+                    return false;
+                }
+            }
+
             beginRunning();
             return false;
         } );
