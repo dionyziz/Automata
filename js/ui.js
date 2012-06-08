@@ -4,8 +4,6 @@ var UI = {
     inputString: '',
     runStep: '',
     displayRunDone: function() {
-        $( '.runtoolbar .step' ).hide();
-        $( '.runtoolbar .edit' ).show();
     },
     displayRejectedStatus: function() {
         $( '#runstatus' ).html( 'Rejected' );
@@ -18,24 +16,18 @@ var UI = {
         this.displayRunDone();
     },
     displayRunStatus: function() {
-        $( '.runtoolbar code' ).html(
-              '<span class="seen">'
-            + this.inputString.substr( 0, this.runStep )
-            + '</span>'
-            + '<span class="current">'
-            + this.inputString.substr( this.runStep, 1 )
-            + '</span>'
-            + this.inputString.substr( this.runStep + 1 )
-        );
-        $( '.runtoolbar .step' ).show();
-        $( '.runtoolbar .edit' ).hide();
         $( '#runstatus' ).html( 'Running' );
+        $( '#runstatus' ).removeClass( 'reject accept icon' );
+        $( '#runinput .state' ).removeClass( 'selected' );
+        $( $( '#runinput .state' )[ this.runStep ] ).addClass( 'selected' );
     },
     resize: function() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight - 39;
     },
     init: function() {
+        var editor;
+
         this.canvas = document.getElementsByTagName( 'canvas' )[ 0 ];
         this.ctx = this.canvas.getContext( '2d' );
 
@@ -65,18 +57,32 @@ var UI = {
         this.runStep = 0;
         var self = this;
 
-        $( '.toolbar .run' ).click( function() {
-            self.inputString = prompt( 'Enter input string: ', 'abba' );
-            $( '.runtoolbar' ).show();
-            $( '.toolbar' ).hide();
-            $( '#runstatus' ).removeClass( 'accept' );
-            $( '#runstatus' ).removeClass( 'reject' );
+        function beginRunning() {
             self.runStep = 0;
             editor.run( self.inputString );
+            ol = $( '#runinput' );
+            ol.empty();
+            for ( var i = 0; i < self.inputString.length; ++i ) {
+                ol.append(
+                    $( '<li class="state">&nbsp;</li>' )
+                );
+                ol.append(
+                    $( '<li class="transition">' + self.inputString[ i ] + '</li>' )
+                );
+            }
+            ol.append(
+                $( '<li class="state">&nbsp;</li>' )
+            );
+            $( '.runner' ).show();
             self.displayRunStatus();
+        }
+
+        $( '.toolbar .run' ).click( function() {
+            self.inputString = prompt( 'Enter input string: ', 'abba' );
+            beginRunning();
             return false;
         } );
-        $( '.runtoolbar .step' ).click( function() {
+        $( '.runner .next' ).click( function() {
             if ( editor.runStep() ) {
                 ++self.runStep;
                 self.displayRunStatus();
@@ -100,6 +106,34 @@ var UI = {
                     self.displayRejectedStatus();
                 }
             }
+            else {
+                self.displayRejectedStatus();
+            }
+
+            return false;
+        } );
+        $( '.runner .rewind' ).click( function() {
+            beginRunning();
+            return false;
+        } );
+        $( '.runner .prev' ).click( function() {
+            var step = Math.max( 0, self.runStep - 1 );
+
+            beginRunning();
+
+            self.runStep = step;
+
+            editor.gotoStep( self.inputString, self.runStep );
+            self.displayRunStatus();
+
+            return false;
+        } );
+        $( '.runner .fastforward' ).click( function() {
+            beginRunning();
+            self.runStep = self.inputString.length;
+            editor.gotoStep( self.inputString, self.runStep );
+            self.displayRunStatus();
+
             return false;
         } );
         $( '.runtoolbar .edit' ).click( function() {
@@ -107,13 +141,14 @@ var UI = {
             editor.runStep();
             $( '.runtoolbar' ).hide();
             $( '.toolbar' ).show();
+
             return false;
         } );
 
         var inputSymbol = document.getElementById( 'inputSymbol' );
         var errorSymbol = document.getElementById( 'errorSymbol' );
         var changeStateName = document.getElementById( 'changeStateName' );
-        var editor = new NFAEditor( this.canvas, nfaview, [ inputSymbol, errorSymbol ], changeStateName );
+        editor = new NFAEditor( this.canvas, nfaview, [ inputSymbol, errorSymbol ], changeStateName );
         editor.play();
     }
 };
