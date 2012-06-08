@@ -75,7 +75,7 @@ NFARenderer.prototype = {
     ARROW_ANGLE: Math.PI / 6,
     SELF_TRANSITION_RADIUS: 20,
     constructor: NFARenderer,
-    showAlphabet: false,
+    freezeEditor: false,
     mode : 'moveState',
     runMode : false,
     flush: 0,
@@ -492,7 +492,7 @@ NFARenderer.prototype = {
         var test = false;
         var alphabetsize = 0;
 
-        if ( !this.showAlphabet ){
+        if ( !this.freezeEditor ){
             for ( var state in this.nfaview.states ) {
                 test = this.hitTestState( mouse, state, nfaview.states[ state ].position );
                 if ( test ) {
