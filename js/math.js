@@ -86,6 +86,57 @@ Vector.findCycle = function( firstPoint, secondPoint, dist ) {
 Vector.innerProduct = function( firstVector, secondVector ) {
     return ( firstVector.x * secondVector.x + firstVector.y * secondVector.y );
 };
+Vector.perpVector = function( firstPoint, secondPoint, dist ){
+    if ( firstPoint.y != secondPoint.y ) {
+        //find the perpedicular line in the form : y = perpSlope * x + perpConst
+        var middlePoint = new Vector( ( firstPoint.x + secondPoint.x ) / 2, ( firstPoint.y + secondPoint.y ) / 2 );
+        var perpSlope = ( secondPoint.x - firstPoint.x ) / ( firstPoint.y - secondPoint.y );
+        var perpConst = middlePoint.y - ( perpSlope * middlePoint.x );
+
+        //find the third point from the perp line and dist
+        var perpFirPoint = middlePoint;
+        if ( firstPoint.x <= secondPoint.x ) {
+            if ( firstPoint.y < secondPoint.y ) {
+                var add = 10;
+            }
+            else{
+                var add = -10;
+            }
+        }
+        else {
+            if ( firstPoint.y < secondPoint.y ) {
+                var add = 10;
+            }
+            else{
+                var add = -10;
+            }
+        }
+
+        var perpSecPoint = new Vector( middlePoint.x + add, perpSlope * ( middlePoint.x + add ) + perpConst );
+        var perpVector = new Vector( perpSecPoint.x - perpFirPoint.x, perpSecPoint.y - perpFirPoint.y );
+        var lenV = perpVector.length();
+        perpVector = perpVector.scale( 1 / lenV );
+
+        return perpVector.scale( dist );
+    }
+    else{
+        var perpConst = ( firstPoint.x + secondPoint.x ) / 2;
+        var middlePoint = new Vector( perpConst, firstPoint.y );
+        var perpFirPoint = middlePoint;
+        if ( firstPoint.x > secondPoint.x ) {
+            var add = 10;
+        }
+        else{
+            var add = -10;
+        }
+        var perpSecPoint = new Vector( middlePoint.x, ( middlePoint.y + add ) );
+        var perpVector = new Vector( perpSecPoint.x - perpFirPoint.x, perpSecPoint.y - perpFirPoint.y );
+        var lenV = perpVector.length();
+        perpVector = perpVector.scale( 1 / lenV );
+
+        return perpVector.scale( dist );
+    }
+};
 
 Vector.prototype = {
     constructor: 'Vector',

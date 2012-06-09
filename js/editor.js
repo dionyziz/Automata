@@ -259,7 +259,7 @@ NFAEditor.prototype = {
         renderer.on( 'mouseouttransition', transitionOut );
         renderer.on( 'mouseoutstate', stateOut );
         renderer.on( 'mousedownstate', function( state, e ) {
-
+            self.inputSubmit();
             if( self.shiftPressed ) {
                 if ( self.selectedElement[ 1 ] != state ) {
                     if ( self.selectedElement[ 0 ] == 'state' ) {
@@ -381,6 +381,7 @@ NFAEditor.prototype = {
             }
         } );
         renderer.on( 'mousedowntransition', function( transition, e ) {
+            self.inputSubmit();
             if ( typeof transition[ 3 ] == 'undefined' ) {
                 var transitionView = nfaview.viewtransitions[ transition[ 0 ] ][ transition[ 2 ] ];
                 var to = self.nfaview.states[ transition[ 2 ] ].position;
@@ -485,6 +486,7 @@ NFAEditor.prototype = {
         } );
         renderer.on( 'dblclick', function( e ) {
             self.elementDeselected();
+            self.inputSubmit();
             var client = new Vector( e.clientX, e.clientY )
             var test = renderer.hitTest( client.minus( renderer.offset ) );
             if ( !test ) {
@@ -506,7 +508,6 @@ NFAEditor.prototype = {
                 self.changeStateName.value = nfaview.stateName[ test[ 1 ] ];
                 self.changeStateName.focus();
             }
-
             else if ( test[ 0 ] == 'transition' ) {
                 self.transitionToChangeName = test[ 1 ];
                 var newx = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.x
@@ -515,8 +516,26 @@ NFAEditor.prototype = {
                 var newy = ( ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position.y
                             + nfaview.states[ self.transitionToChangeName[ 2 ] ].position.y ) / 2 )
                             + ( parseFloat( self.inputSymbol.style.height ) / 2 ) + 20; // TODO fix 20 to something more general
-                self.inputSymbol.style.left = newx + 'px';
-                self.inputSymbol.style.top = newy + 'px';
+                var newPos = new Vector( newx, newy );
+                var arcView = false;
+                for ( var sigma in nfaview.invtransitions[ self.transitionToChangeName[ 2 ] ][ self.transitionToChangeName[ 0 ] ] ) {
+                    if ( sigma != '$$' ) {
+                        arcView = true;
+                    }
+                }
+
+                if ( arcView ) {
+                    var perpVector = Vector.perpVector ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position,
+                                                         nfaview.states[ self.transitionToChangeName[ 2 ] ].position,
+                                                         renderer.ARC_TRANSITION_OFFSET + 8 );
+                }
+                else {
+                    var perpVector = new Vector( 0, 0 );
+                }
+
+                newPos = newPos.plus( perpVector );
+                self.inputSymbol.style.left = newPos.x + 'px';
+                self.inputSymbol.style.top = newPos.y + 'px';
                 self.inputSymbol.type = 'text';
                 var currentVal = '';
                 for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {

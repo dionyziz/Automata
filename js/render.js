@@ -74,6 +74,7 @@ NFARenderer.prototype = {
     ALPHABET_RADIUS: 15,
     ARROW_ANGLE: Math.PI / 6,
     SELF_TRANSITION_RADIUS: 20,
+    ARC_TRANSITION_OFFSET: 20,
     constructor: NFARenderer,
     freezeEditor: false,
     mode : 'moveState',
@@ -128,7 +129,13 @@ NFARenderer.prototype = {
 
                         outstring = outstring.slice( 0, -2 );
                         if ( outstring != '' ) {
-                            this.renderTransition( state, outstring, to, true );
+                            var arc = false;
+                            for ( var sigma in nfaview.invtransitions[ to ][ state ] ) {
+                                if ( sigma != '$$' ) {
+                                    arc = true;
+                                }
+                            }
+                            this.renderTransition( state, outstring, to, true, arc );
                         }
                     }
                 }
@@ -266,33 +273,60 @@ NFARenderer.prototype = {
             this.renderArrow( start, end );
         }
     },
-    renderArrow: function( from, to ) {
+    renderArrow: function( from, to, arc ) {
         var ctx = this.ctx;
         var theta = Math.atan2( to.y - from.y, to.x - from.x );
-        var cycl = Vector.findCycle( from, to, 20 );
-        var center = cycl[ 0 ];
 
-        var fromToCenter = from.minus( center );
-        var toToCenter = to.minus( center );
-        var fromTheta = fromToCenter.theta(); // Math.acos( Vector.innerProduct( fromToCenter, new Vector( 1, 0 ) ) / fromToCenter.length() );
-        var toTheta = toToCenter.theta(); //Math.acos( Vector.innerProduct( toToCenter, new Vector( 1, 0 ) ) / toToCenter.length() );
-        var radius = cycl[ 1 ];
+        if ( arc ) {
+            var cycl = Vector.findCycle( from, to, this.ARC_TRANSITION_OFFSET );
+            var center = cycl[ 0 ];
 
-        ctx.beginPath();
-        // draw arrow line
-        ctx.arc( center.x, center.y, radius, fromTheta, toTheta, false );
-        ctx.moveTo( from.x, from.y );
-        ctx.save();
-        ctx.translate( to.x, to.y );
-        ctx.rotate( theta );
-        ctx.save();
-        ctx.lineTo( 0, 0 );
-        ctx.stroke();
+            var fromToCenter = from.minus( center );
+            var toToCenter = to.minus( center );
+            var fromTheta = fromToCenter.theta(); // Math.acos( Vector.innerProduct( fromToCenter, new Vector( 1, 0 ) ) / fromToCenter.length() );
+            var toTheta = toToCenter.theta(); //Math.acos( Vector.innerProduct( toToCenter, new Vector( 1, 0 ) ) / toToCenter.length() );
+            var radius = cycl[ 1 ];
+            var rotTheta = Math.atan( - ( 1 / Math.tan( toTheta ) ) );
+            if ( Math.abs( theta - rotTheta ) > ( Math.PI / 2 ) ) {
+                theta = rotTheta + Math.PI;
+            }
+            else {
+                theta = rotTheta;
+            }
 
-        this.renderArrowEnd();
+            ctx.beginPath();
+            // draw arrow line
+            ctx.arc( center.x, center.y, radius, fromTheta, toTheta, false );
+            ctx.moveTo( from.x, from.y );
+            ctx.save();
+            ctx.translate( to.x, to.y );
+            ctx.rotate( theta );
+            ctx.save();
+            //ctx.lineTo( 0, 0 );
+            ctx.stroke();
 
-        ctx.restore();
-        ctx.restore();
+            this.renderArrowEnd();
+
+            ctx.restore();
+            ctx.restore();
+        }
+        else {
+            ctx.beginPath();
+            // draw arrow line
+            ctx.moveTo( from.x, from.y );
+            ctx.save();
+            ctx.translate( to.x, to.y );
+            ctx.rotate( theta );
+            ctx.save();
+            ctx.lineTo( 0, 0 );
+            ctx.stroke();
+
+            this.renderArrowEnd();
+
+            ctx.restore();
+            ctx.restore();
+
+        }
     },
     renderArrowEnd: function() {
         var ctx = this.ctx;
@@ -400,7 +434,7 @@ NFARenderer.prototype = {
             ctx.restore();
         }
     },
-    renderTransition: function( from, via, to, showText ) {
+    renderTransition: function( from, via, to, showText, arc) {
         var strokeStyle = 'black';
         var ctx = this.ctx;
         var angle = 1 / 2;
@@ -413,6 +447,7 @@ NFARenderer.prototype = {
         }
         var start, end, target;
         var circular = false;
+        var arcView = arc && ( !transitionView.detached );
 
         ctx.save();
 
@@ -451,6 +486,9 @@ NFARenderer.prototype = {
         }
         else {
             angle = from.position.minus( target ).theta();
+            if ( arcView ) {
+                angle -= Math.PI / 8;
+            }
         }
         var offset = Vector.fromPolar( this.STATE_RADIUS, angle );
         start = from.position.minus( offset );
@@ -513,12 +551,21 @@ NFARenderer.prototype = {
         }
         end = target;
         if ( !transitionView.detached ) {
+            if ( arcView ) {
+                angle += Math.PI / 4;
+            }
             end = end.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
         }
-        this.renderArrow( start, end );
+        this.renderArrow( start, end, ( arc && (! transitionView.detached ) ) );
 
         if ( showText ) {
-            this.renderText( start.plus( end ).scale( 1 / 2 ), via , true, transitionView.usedInRun);
+            if ( arcView ) {
+                var perpVector = Vector.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
+            }
+            else {
+                var perpVector = new Vector( 0, 0 );
+            }
+            this.renderText( start.plus( end ).scale( 1 / 2 ).plus( perpVector ), via, true, transitionView.usedInRun );
         }
 
         ctx.restore();
