@@ -43,8 +43,11 @@ NFA.prototype = {
     },
     addTransition: function( from, via, to ) {
         if ( via != '$$' ) {
-            if ( typeof this.alphabet[ via ] == 'undefined' ) {
+            if ( via.length > 1 ) {
                 return false;
+            }
+            if ( typeof this.alphabet[ via ] == 'undefined' ) {
+                this.addSymbol( via );
             }
         }
         assert( typeof this.states[ from ] != 'undefined' );
@@ -144,10 +147,12 @@ NFA.prototype = {
     next: function( symbol ) {
         var nextLevelStates = {};
 
+        this.emit( 'removeprevstep' );
         for ( state in this.currentStates ){
             if ( typeof this.transitions[ state ][ symbol ] != 'undefined' ) {
                 for ( var to in this.transitions[ state ][ symbol ] ){
                     nextLevelStates[ to ] = to;
+                    this.emit( 'addusedtransition', state, to, symbol );
                 }
             }
         }
@@ -165,6 +170,7 @@ NFA.prototype = {
                     if ( !( to in this.currentStates ) ) {
                         changeFlag = true;
                         this.currentStates[ to ] = to;
+                        this.emit( 'addusedtransition', state, to, 'ε' );
                     }
                 }
             }
@@ -185,6 +191,7 @@ NFA.prototype = {
     },
     gotoStep: function( step ) {
         this.reset();
+        this.emit( 'removeprevstep' );
         for ( var i = 0; i < step; ++i ) {
             this.nextStepByStep();
         }

@@ -11,7 +11,8 @@ function NFAView( nfa ) {
     this.newtransition = {
         position: new Vector( 0, 0 ),
         importance: 'normal',
-        detached: true
+        detached: true,
+        usedInRun: false,
     } ;
     this.newtransitionFrom = false;
     function stateAdded( state ) {
@@ -28,16 +29,18 @@ function NFAView( nfa ) {
         for ( var to in nfa.states ) {
             self.invtransitions[ state ][ to ] = {};
             self.invtransitions[ to ][ state ] = {};
-            self.viewtransitions[ state ][ to ] = [ {
+            self.viewtransitions[ state ][ to ] = {
                     position: new Vector( 0, 0 ),
                     importance: 'normal',
-                    detached: false
-                } ];
-            self.viewtransitions[ to ][ state ] = [ {
+                    detached: false,
+                    usedInRun: false,
+                };
+            self.viewtransitions[ to ][ state ] = {
                     position: new Vector( 0, 0 ),
                     importance: 'normal',
-                    detached: false
-                } ];
+                    detached: false,
+                    usedInRun: false
+                };
         }
 
         for ( var sigma in nfa.alphabet ) {
@@ -48,7 +51,8 @@ function NFAView( nfa ) {
                 self.transitions[ state ][ sigma ][ to ] = [ {
                     position: new Vector( 0, 0 ),
                     importance: 'normal',
-                    detached: false
+                    detached: false,
+                    usedInRun: false
                 } ];
             }
         }
@@ -57,7 +61,8 @@ function NFAView( nfa ) {
             self.transitions[ state ][ sigma ][ to ] = [ {
                 position: new Vector( 0, 0 ),
                 importance: 'normal',
-                detached: false
+                detached: false,
+                usedInRun: false
             } ];
         }
     }
@@ -82,7 +87,8 @@ function NFAView( nfa ) {
         self.transitions[ from ][ via ][ to ] = {
             position: new Vector( 0, 0 ),
             importance: 'normal',
-            detached: false
+            detached: false,
+            usedInRun: false
         };
         self.invtransitions[ from ][ to ][ via ] = via;
     } );
@@ -93,6 +99,21 @@ function NFAView( nfa ) {
     this.nfa.on( 'symboladded' , function( sigma ) {
         for ( var state in nfa.states ) {
             self.transitions[ state ][ sigma ] = {};
+        }
+    } );
+    this.nfa.on( 'removeprevstep', function() {
+        for ( var from in nfa.states ) {
+            for ( var to in nfa.states ) {
+                self.viewtransitions[ from ][ to ].usedInRun = false;
+            }
+        }
+    } );
+    this.nfa.on( 'addusedtransition', function( from, to, symbol ) {
+        if ( self.viewtransitions[ from ][ to ].usedInRun == false ){
+            self.viewtransitions[ from ][ to ].usedInRun = symbol;
+        }
+        else {
+            self.viewtransitions[ from ][ to ].usedInRun = symbol;
         }
     } );
 }
