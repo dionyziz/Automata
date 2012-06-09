@@ -33,4 +33,4 @@ for controller in listdir( 'controllers' ):
         controllerClass( app, request )
 
 debug( True )
-run( app, host = '0.0.0.0', port = 5080, reloader = True )
+run( app, host = config.get( 'server', 'host' ), port = config.get( 'server', 'port' ), reloader = True )
