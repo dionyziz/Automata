@@ -451,7 +451,7 @@ NFARenderer.prototype = {
 
         ctx.save();
 
-        if ( transitionView.usedInRun == false ) {
+        if ( !transitionView.usedInRun ) {
             ctx.fillStyle = ctx.strokeStyle = 'black';
         }
         else {
@@ -565,7 +565,13 @@ NFARenderer.prototype = {
             else {
                 var perpVector = new Vector( 0, 0 );
             }
-            this.renderText( start.plus( end ).scale( 1 / 2 ).plus( perpVector ), via, true, transitionView.usedInRun );
+            if ( !transitionView.usedInRun ) {
+                var importantChar = '';
+            }
+            else {
+                var importantChar = transitionView.usedInRun;
+            }
+            this.renderText( start.plus( end ).scale( 1 / 2 ).plus( perpVector ), via, true, importantChar );
         }
 
         ctx.restore();
