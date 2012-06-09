@@ -12,11 +12,11 @@ class Database:
         self.conn.close()
 
     def query( self, sql ):
-        conn.query( sql )
-        return conn.store_result()
+        self.conn.query( sql )
+        return self.conn.store_result()
 
     def array( self, sql ):
-        return db( conn, sql ).fetch_row( maxrows = 0, how = 1 )
+        return self.query( sql ).fetch_row( maxrows = 0, how = 1 )
 
 db = None
 
