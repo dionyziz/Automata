@@ -115,7 +115,7 @@ NFARenderer.prototype = {
         for ( var i = 0; i < nfa.numStates; ++i ) {
             if ( typeof stateArray[ i ] != 'undefined' ) {
                 var state = stateArray[ i ].state;
-                var outstatesnum = nfa.transitionsnum[ state ];
+                var outstatesnum = nfa.transitionsNum[ state ];
 
                 for ( var j = 0; j < nfa.numStates; ++j ) {
                     var outstring = '';

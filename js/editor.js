@@ -77,7 +77,7 @@ NFAEditor.prototype = {
         this.selectedRectStates = {};
         this.renderer.selectedStates = {};
     },
-    inputSubmit : function() {
+    inputSubmit: function() {
         if ( this.transitionToChange != false ) {
             var sigma = this.inputSymbol.value;
             var insertOk = false;
@@ -307,15 +307,27 @@ NFAEditor.prototype = {
                 }
             }
             function up( e ) {
+                // TODO: Enable this line to simulate 'once' EventEmmitter functionality from below
+                // document.removeEventListener( 'mouseup', up );
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
-                document.removeEventListener( 'mouesup', up );
                 self.dragging = false;
                 canvas.style.cursor = 'default';
             }
             renderer.on( 'mousemove', move );
-            document.addEventListener( 'mouseup', up );
+            // TODO: up() function seems to be getting called on mouse down
+            //       for some weird reason (a but in the renderer probably),
+            //       and if it's removed then the create transition
+            //       functionality fais to work correctly. Not sure what's going on here,
+            //       but this needs to be replaced with a document.addEventListener
+            //       so that when mouseup'ing outside the browser window, the automaton
+            //       state that is being dragged is still released.
+            // TODO: enable this line:
+            //       document.addEventListener( 'mouseup', up );
+            // TODO: disable this line:
+            renderer.once( 'mouseup', up );
+            // Not sure why all this is happening.
 
             renderer.removeListener( 'mouseoutstate', stateOut );
             renderer.removeListener( 'mouseouttransition', transitionOut );
@@ -615,16 +627,6 @@ NFAEditor.prototype = {
                     if ( self.selectedElement[ 0 ] == 'state' ){
                         nfa.startState = self.selectedElement[ 1 ];
                     }
-                    break;
-                case 16: //shift
-                    self.shiftPressed = true;
-                    break;
-            }
-        };
-        document.onkeyup = function( e ) {
-            switch ( e.keyCode ) {
-                case 16: //shift
-                    self.shiftPressed = false;
                     break;
             }
         };

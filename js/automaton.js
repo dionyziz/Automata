@@ -9,7 +9,7 @@ function NFA( alphabet ) {
            '$$' : {}
         }
     };
-    this.transitionsnum = {
+    this.transitionsNum = {
         s: 0
     };
 
@@ -19,7 +19,7 @@ function NFA( alphabet ) {
     }
     // array from state to dictionary from alphabet symbol to state
     this.numStates = 1;
-    this.nextnumState = 1;
+    this.nextNumState = 1;
     this.states = {
         's': true
     };
@@ -53,7 +53,7 @@ NFA.prototype = {
         assert( typeof this.states[ from ] != 'undefined' );
         assert( typeof this.states[ to ] != 'undefined' );
         this.transitions[ from ][ via ][ to ] = to;
-        ++this.transitionsnum[ from ];
+        ++this.transitionsNum[ from ];
 
         this.emit( 'transitionadded', from, via, to );
 
@@ -68,14 +68,14 @@ NFA.prototype = {
         if ( to in this.transitions[ from ][ via ] ){
             delete this.transitions[ from ][ via ][ to ];
         }
-        ++this.transitionsnum[ from ];
+        ++this.transitionsNum[ from ];
 
         this.emit( 'transitiondeleted', from, via, to );
     },
     addState: function( state ) {
         this.states[ state ] = true;
         this.transitions[ state ] = {};
-        this.transitionsnum[ state ] = 0
+        this.transitionsNum[ state ] = 0
         for ( var sigma in this.alphabet ) {
             this.transitions[ state ][ sigma ] = {};
         }
@@ -83,7 +83,7 @@ NFA.prototype = {
         this.transitions[ state ][ '$$' ] = {};
 
         ++this.numStates;
-        ++this.nextnumState;
+        ++this.nextNumState;
         this.emit( 'stateadded', state );
 
         return this.numStates;
@@ -102,7 +102,7 @@ NFA.prototype = {
             }
         }
         delete this.transitions[ state ];
-        delete this.transitionsnum[ state ];
+        delete this.transitionsNum[ state ];
         delete this.states[ state ];
         this.emit( 'statedeleted', state );
         --this.numStates;
@@ -114,8 +114,6 @@ NFA.prototype = {
         this.accept[ state ] = false;
     },
     reset: function() {
-        console.log( 'NFA reset' );
-
         assert( this.numStates > 0 );
         assert( typeof this.states[ this.startState ] != 'undefined' );
         this.currentStates = {};
@@ -135,8 +133,8 @@ NFA.prototype = {
                 input = input.substr( 1 );
             }
 
-            for ( finalstate in this.currentStates ) {
-                if ( this.accept[ finalstate ] ) {
+            for ( var finalState in this.currentStates ) {
+                if ( this.accept[ finalState ] ) {
                     return true;
                 }
             }
@@ -195,6 +193,34 @@ NFA.prototype = {
         for ( var i = 0; i < step; ++i ) {
             this.nextStepByStep();
         }
+    },
+    serialize: function() {
+        return JSON.stringify( {
+            states: this.states,
+            transitions: this.transitions,
+            accept: this.accept,
+            startState: this.startState,
+            transitionsNum: this.transitionsNum,
+            alphabet: this.alphabet,
+            nextNumState: this.nextNumState,
+            numStates: this.numStates
+        } );
+    },
+    deserialize: function( source ) {
+        console.log( 'Deserializing NFA' );
+
+        source = JSON.parse( source );
+        for ( var attr in source ) {
+            this[ attr ] = source[ attr ];
+        }
     }
 };
 NFA.extend( EventEmitter );
+
+NFA.deserialize = function( source ) {
+    var nfa = ( new NFA( [] ) );
+    
+    nfa.deserialize( source ); 
+
+    return nfa;
+};
