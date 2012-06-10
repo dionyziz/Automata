@@ -9,7 +9,7 @@ class Database:
         self.conn = _mysql.connect( host = hostname, user = username, passwd = password, db = database )
 
     def eq( self, value ):
-        return [ str( x ) + ' = \'' + str( value[ x ] ) + '\'' for x in value ]
+        return [ unicode( x ) + ' = \'' + unicode( value[ x ] ) + '\'' for x in value ]
 
     def close( self ):
         self.conn.close()

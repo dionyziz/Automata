@@ -31,7 +31,9 @@ var UI = {
             return false;
         } );
         $( '.toolbar .share' ).click( function() {
-            alert( 'Coming soon! :)' );
+            Server.Automaton.create( nfaview.serialize(), function( id ) {
+                alert( 'Created automaton with id = ' + id );
+            } );
             return false;
         } );
 

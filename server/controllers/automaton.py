@@ -4,10 +4,12 @@ class controller:
     def __init__( self, app, request ):
         @app.route( '/automaton/create', method = 'POST' )
         def create():
-            name = request.forms.post( 'name' )
-            data = request.forms.pots( 'data' )
+            name = request.forms.name
+            data = request.forms.data
 
-            models.automaton.create( name, data )
+            return {
+                'id': models.automaton.create( name, data )
+            }
         @app.route( '/automaton/delete', method = 'POST' )
         def delete():
             pass
