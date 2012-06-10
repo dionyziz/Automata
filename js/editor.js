@@ -94,7 +94,7 @@ NFAEditor.prototype = {
             if ( insertOk ) {
                 this.inputSymbol.value = '';
                 this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
-                this.errorSymbol.hidden = true;
+                $( this.errorSymbol ).hide();
                 this.inputSymbol.type = 'hidden';
                 this.transitionToChange = false;
             }
@@ -103,7 +103,7 @@ NFAEditor.prototype = {
                 var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
-                this.errorSymbol.hidden = false;
+                $( this.errorSymbol ).show();
             }
         }
         else if ( this.stateToChangeName != false ) {
@@ -139,8 +139,8 @@ NFAEditor.prototype = {
                         this.nfa.deleteTransition( this.transitionToChangeName[ 0 ], sigma, this.transitionToChangeName[ 2 ] );
                     }
                 }
-                this.errorSymbol.hidden = true;
-                this.inputSymbol.type = 'hidden';
+                $( this.errorSymbol ).hide();
+                $( this.inputSymbol ).hide();
                 this.elementDeselected();
                 this.transitionToChangeName = false;
             }
@@ -149,7 +149,7 @@ NFAEditor.prototype = {
                 var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.offsetHeight ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
-                this.errorSymbol.hidden = false;
+                $( this.errorSymbol ).show();
             }
         }
     },
@@ -555,7 +555,7 @@ NFAEditor.prototype = {
                 newPos = newPos.plus( perpVector );
                 self.inputSymbol.style.left = newPos.x + 'px';
                 self.inputSymbol.style.top = newPos.y + 'px';
-                self.inputSymbol.type = 'text';
+                $( self.inputSymbol ).show();
                 var currentVal = '';
                 for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {
                     currentVal += symbol + ',';
@@ -597,8 +597,8 @@ NFAEditor.prototype = {
                     if ( self.transitionToChange != false ) {
                         self.inputSymbol.value = '';
                         nfa.deleteTransition( self.transitionToChange[ 0 ], self.transitionToChange[ 1 ], self.transitionToChange[ 2 ] );
-                        self.errorSymbol.hidden = true;
-                        self.inputSymbol.type = 'hidden';
+                        $( self.errorSymbol ).hide();
+                        $( self.inputSymbol ).hide();
                         self.transitionToChange = false;
                     }
                     else if ( self.stateToChangeName != false ) {
@@ -608,8 +608,8 @@ NFAEditor.prototype = {
                     }
                     else if ( self.transitionToChangeName != false ) {
                         self.inputSymbol.value = '';
-                        self.errorSymbol.hidden = true;
-                        self.inputSymbol.type = 'hidden';
+                        $( self.errorSymbol ).hide();
+                        $( self.inputSymbol ).hide();
                         self.transitionToChangeName = false;
                     }
                     break;

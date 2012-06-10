@@ -46,8 +46,9 @@
             </div>
         </div>
         <div id='editor'>
-            <input type="hidden" size='8' style='height:20px;width:80px;left:0px;top:0px' id="inputSymbol" />
-            <input type="hidden" size='8' style='height:30px;width:30px;left:0px;top:0px' id="changeStateName" />
+            <label for="insertError" style="position:absolute; height:10px; color:red; font:bold 14px Georgia, serif; width:100px; left:200px; top:200px; display: none" id="errorSymbol" hidden="hidden">Wrong symbol!</label>
+            <input type="text" size='8' style='height:20px;width:80px;left:0px;top:0px;display:none' id="inputSymbol" />
+            <input type="text" size='8' style='height:30px;width:30px;left:0px;top:0px;display:none' id="changeStateName" />
             <canvas width='800' height='800'></canvas>
         </div>
         <div id='sharer'>
