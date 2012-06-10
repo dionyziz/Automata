@@ -8,7 +8,7 @@ class Database:
 
         self.conn = _mysql.connect( host = hostname, user = username, passwd = password, db = database )
 
-    def eq( value ):
+    def eq( self, value ):
         return [ str( x ) + ' = \'' + str( value[ x ] ) + '\'' for x in value ]
 
     def close( self ):
@@ -26,20 +26,26 @@ class Database:
             return self.array( 'SELECT %s FROM %s' % ( ','.join( select ), table ) )
         return self.array( 'SELECT %s FROM %s WHERE %s' % ( ','.join( select ), table, ' AND '.join( self.eq( where ) ) ) )
 
+    def selectOne( self, table, where = {}, select = [ '*' ] ):
+        rows = list( self.select( table, where, select ) )
+        if len( rows ) == 0:
+            return None
+        return rows[ 0 ]
+
     def insert( self, table, value ):
         self.query( 'INSERT INTO %s SET %s' % ( table, ','.join( self.eq( value ) ) ) )
         return self.conn.insert_id()
 
-db = None
+singletonDB = None
 
-def getdb():
-    global db
+def db():
+    global singletonDB
 
-    if db is None:
+    if singletonDB is None:
         raise NameError( 'Database has not been initialized' )
-    return db
+    return singletonDB
 
 def init( hostname, username, password, database ):
-    global db
+    global singletonDB
 
-    db = Database( hostname, username, password, database )
+    singletonDB = Database( hostname, username, password, database )
