@@ -36,7 +36,7 @@ var UI = {
             Server.Automaton.create( nfaview.serialize(), function( id ) {
                 document.body.style.cursor = 'default';
                 var input = $( '#sharer input' )[ 0 ];
-                input.value = id;
+                input.value = 'http://automata.discrete.gr/automata/#z' + id;
                 $( '#sharer' ).show();
                 input.select();
                 input.focus();
@@ -94,6 +94,19 @@ var UI = {
         editor.play();
 
         Runner.init( editor );
+
+        if ( document.location.hash.substr( 0, 2 ) == '#v' ) {
+            var nfaId = document.location.hash.split( 'v' )[ 1 ];
+
+            document.body.style.cursor = 'wait';
+
+            console.log( 'Loading NFA ' + nfaId );
+
+            Server.Automaton.view( nfaId, function ( automaton ) {
+                document.body.style.cursor = 'default';
+                nfaview.deserialize( automaton.data );
+            } );
+        }
     }
 };
 UI.init();

@@ -594,14 +594,19 @@ NFARenderer.prototype = {
                 var j = 0;
                 for ( var sigma in nfa.alphabet ) {
                     for ( var to in nfa.transitions[ state ][ sigma ] ) {
-                        test = this.hitTestTransition(
-                            mouse,
-                            nfaview.states[ state ].position,
-                            sigma,
-                            nfaview.states[ to ].position
-                        );
-                        if ( test ) {
-                            return [ 'transition', [ state, sigma, to ] ];
+                        try { 
+                            test = this.hitTestTransition(
+                                mouse,
+                                nfaview.states[ state ].position,
+                                sigma,
+                                nfaview.states[ to ].position
+                            );
+                            if ( test ) {
+                                return [ 'transition', [ state, sigma, to ] ];
+                            }
+                        }
+                        catch ( e ) {
+                            console.log( 'We got a problem' );
                         }
                         ++j;
                     }
