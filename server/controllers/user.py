@@ -14,4 +14,4 @@ class controller:
         def view():
             import models.user
 
-            return 'User view: ' + models.user.a
+            return 'User view: ' + models.user

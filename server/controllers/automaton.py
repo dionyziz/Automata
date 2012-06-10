@@ -14,4 +14,4 @@ class controller:
             pass
         @app.route( '/automaton/list', method = 'GET' )
         def list():
-            return 'Listing automatons'
+            pass

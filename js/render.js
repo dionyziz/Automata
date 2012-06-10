@@ -74,15 +74,17 @@ NFARenderer.prototype = {
     ALPHABET_RADIUS: 15,
     ARROW_ANGLE: Math.PI / 6,
     SELF_TRANSITION_RADIUS: 20,
+    ARC_TRANSITION_OFFSET: 20,
     constructor: NFARenderer,
     freezeEditor: false,
     mode : 'moveState',
     runMode : false,
-    flush: 0,
-    flushBl : false,
+    flash: 0,
+    flashBl : false,
     selectionRectShow : false,
     selectionRectFrom : new Vector( 100, 100 ),
     selectionRectTo : new Vector( 300, 300 ),
+    timeOffset: 0,
     render: function() {
         this.ctx.clearRect( 0, 0, this.ctx.canvas.width, this.ctx.canvas.height );
         var nfa = this.nfaview.nfa;
@@ -101,16 +103,8 @@ NFARenderer.prototype = {
         } );
 
         if ( this.runMode ) {
-            if ( !this.flushBl ) {
-                if ( ++this.flush > 40 ) {
-                    this.flushBl = true;
-                }
-            }
-            else {
-                if ( --this.flush == 0 ) {
-                    this.flushBl = false;
-                }
-            }
+            var par = Math.abs( ( new Date() * 1 ) - this.timeOffset );
+            this.flash = Math.sin( 2 * Math.PI * par / 2000 ) + 1;
         }
 
         var RectMinx = Math.min( this.selectionRectFrom.x, this.selectionRectTo.x );
@@ -135,7 +129,13 @@ NFARenderer.prototype = {
 
                         outstring = outstring.slice( 0, -2 );
                         if ( outstring != '' ) {
-                            this.renderTransition( state, outstring, to, true );
+                            var arc = false;
+                            for ( var sigma in nfaview.invtransitions[ to ][ state ] ) {
+                                if ( sigma != '$$' ) {
+                                    arc = true;
+                                }
+                            }
+                            this.renderTransition( state, outstring, to, true, arc );
                         }
                     }
                 }
@@ -203,7 +203,7 @@ NFARenderer.prototype = {
                 ctx.shadowColor = '#ff4040';
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
-                ctx.shadowBlur = 5 + ( this.flush / 2 );
+                ctx.shadowBlur = 5 + ( this.flash * 10 );
             }
             else {
                 radgrad.addColorStop( 0, '#ccffcc' );
@@ -214,7 +214,7 @@ NFARenderer.prototype = {
                 ctx.shadowColor = '#00ff00';
                 ctx.shadowOffsetX = 0;
                 ctx.shadowOffsetY = 0;
-                ctx.shadowBlur = 5 + ( this.flush / 2 );
+                ctx.shadowBlur = 5 + ( this.flash * 10 );
             }
         }
         else {
@@ -259,7 +259,7 @@ NFARenderer.prototype = {
             ctx.fill();
         }
 
-        this.renderText( new Vector(0, 0), nfaview.stateName[ state ], false );
+        this.renderText( new Vector(0, 0), nfaview.stateName[ state ], false, false );
         ctx.restore();
 
         if ( this.nfaview.nfa.startState == state ) {
@@ -273,24 +273,60 @@ NFARenderer.prototype = {
             this.renderArrow( start, end );
         }
     },
-    renderArrow: function( from, to ) {
+    renderArrow: function( from, to, arc ) {
         var ctx = this.ctx;
         var theta = Math.atan2( to.y - from.y, to.x - from.x );
 
-        ctx.beginPath();
-        // draw arrow line
-        ctx.moveTo( from.x, from.y );
-        ctx.save();
-        ctx.translate( to.x, to.y );
-        ctx.rotate( theta );
-        ctx.save();
-        ctx.lineTo( 0, 0 );
-        ctx.stroke();
+        if ( arc ) {
+            var cycl = Vector.findCycle( from, to, this.ARC_TRANSITION_OFFSET );
+            var center = cycl[ 0 ];
 
-        this.renderArrowEnd();
+            var fromToCenter = from.minus( center );
+            var toToCenter = to.minus( center );
+            var fromTheta = fromToCenter.theta(); // Math.acos( Vector.innerProduct( fromToCenter, new Vector( 1, 0 ) ) / fromToCenter.length() );
+            var toTheta = toToCenter.theta(); //Math.acos( Vector.innerProduct( toToCenter, new Vector( 1, 0 ) ) / toToCenter.length() );
+            var radius = cycl[ 1 ];
+            var rotTheta = Math.atan( - ( 1 / Math.tan( toTheta ) ) );
+            if ( Math.abs( theta - rotTheta ) > ( Math.PI / 2 ) ) {
+                theta = rotTheta + Math.PI;
+            }
+            else {
+                theta = rotTheta;
+            }
 
-        ctx.restore();
-        ctx.restore();
+            ctx.beginPath();
+            // draw arrow line
+            ctx.arc( center.x, center.y, radius, fromTheta, toTheta, false );
+            ctx.moveTo( from.x, from.y );
+            ctx.save();
+            ctx.translate( to.x, to.y );
+            ctx.rotate( theta );
+            ctx.save();
+            //ctx.lineTo( 0, 0 );
+            ctx.stroke();
+
+            this.renderArrowEnd();
+
+            ctx.restore();
+            ctx.restore();
+        }
+        else {
+            ctx.beginPath();
+            // draw arrow line
+            ctx.moveTo( from.x, from.y );
+            ctx.save();
+            ctx.translate( to.x, to.y );
+            ctx.rotate( theta );
+            ctx.save();
+            ctx.lineTo( 0, 0 );
+            ctx.stroke();
+
+            this.renderArrowEnd();
+
+            ctx.restore();
+            ctx.restore();
+
+        }
     },
     renderArrowEnd: function() {
         var ctx = this.ctx;
@@ -313,7 +349,7 @@ NFARenderer.prototype = {
         ctx.closePath();
         ctx.restore();
     },
-    renderText: function( location, text, stroke ) {
+    renderText: function( location, text, stroke, importantChar ) {
         var ctx = this.ctx;
         var deftext = '';
         var subtext = '';
@@ -335,40 +371,70 @@ NFARenderer.prototype = {
         }
 
         if ( subtext != '' ) {
-            var defdim = ctx.measureText( deftext );
-            var subdim = ctx.measureText( subtext );
             ctx.save();
             ctx.fillStyle = 'black';
             ctx.font = '12pt Verdana';
             ctx.strokeStyle = 'white';
             ctx.lineWidth = 6;
+
+            var defdim = ctx.measureText( deftext );
+            var subdim = ctx.measureText( subtext );
+            var fontHeight = ctx.measureText( 'o' ).width;
+
             if ( stroke ) {
-                ctx.strokeText( deftext, location.x - defdim.width, location.y + defdim.width / 2 );
+                ctx.strokeText( deftext, location.x - defdim.width / 2, location.y + ( fontHeight / 2 ) );
             }
-            ctx.fillText( deftext, location.x - defdim.width, location.y + defdim.width / 2 );
+            ctx.fillText( deftext, location.x - defdim.width / 2, location.y + ( fontHeight / 2 ) );
 
             ctx.font = '8pt Verdana';
             if ( stroke ) {
-                ctx.strokeText( subtext, location.x + defdim.width / 2, location.y + defdim.width / 2 + 4 );
+                ctx.strokeText( subtext, location.x + defdim.width / 2 + 1, location.y + ( fontHeight / 2 ) + 4 );
             }
-            ctx.fillText( subtext, location.x + defdim.width / 2, location.y + defdim.width / 2 + 4 );
+            ctx.fillText( subtext, location.x + defdim.width / 2 + 1, location.y + ( fontHeight / 2 ) + 4 );
             ctx.restore();
         }
         else {
-            var dim = ctx.measureText( text );
+
+            var symbols = text.split(', ');
+            var widthToPass = -symbols.length;
+
             ctx.save();
-            ctx.fillStyle = 'black';
-            ctx.font = '12pt Verdana';
-            ctx.strokeStyle = 'white';
-            ctx.lineWidth = 6;
-            if ( stroke ) {
-                ctx.strokeText( text, location.x - dim.width, location.y + dim.width / 2 );
+
+            for ( var i = 0; i < symbols.length; ++i ) {
+                if ( i == ( symbols.length - 1 ) ) {
+                    var sigmaShow = symbols[ i ];
+                }
+                else {
+                    var sigmaShow = symbols[ i ] + ', ';
+                }
+
+                if ( ( ( importantChar + ', ' ) == sigmaShow ) || ( importantChar == sigmaShow ) ) {
+                    ctx.fillStyle = 'red';
+                    ctx.font = 'bold 12pt Verdana';
+                }
+                else {
+                    ctx.fillStyle = 'black';
+                    ctx.font = '12pt Verdana';
+                }
+                ctx.strokeStyle = 'white';
+                ctx.lineWidth = 6;
+
+                var dim = ctx.measureText( text );
+                var sigmadim = ctx.measureText( sigmaShow );
+                var fontHeight = ctx.measureText( 'o' ).width;
+
+                if ( stroke ) {
+                    ctx.strokeText( sigmaShow, location.x - ( dim.width / 2 ) + widthToPass, location.y + ( fontHeight / 2 ) );
+                }
+                ctx.fillText( sigmaShow, location.x - ( dim.width / 2 ) + widthToPass, location.y + ( fontHeight / 2 ) );
+
+                widthToPass += sigmadim.width + 1;
             }
-            ctx.fillText( text, location.x - dim.width, location.y + dim.width / 2 );
+
             ctx.restore();
         }
     },
-    renderTransition: function( from, via, to, showText ) {
+    renderTransition: function( from, via, to, showText, arc) {
         var strokeStyle = 'black';
         var ctx = this.ctx;
         var angle = 1 / 2;
@@ -381,9 +447,16 @@ NFARenderer.prototype = {
         }
         var start, end, target;
         var circular = false;
+        var arcView = arc && ( !transitionView.detached );
 
         ctx.save();
-        ctx.fillStyle = ctx.strokeStyle = 'black';
+
+        if ( !transitionView.usedInRun ) {
+            ctx.fillStyle = ctx.strokeStyle = 'black';
+        }
+        else {
+            ctx.fillStyle = ctx.strokeStyle = 'red';
+        }
         switch ( transitionView.importance ) {
             case 'normal':
                 break;
@@ -413,6 +486,9 @@ NFARenderer.prototype = {
         }
         else {
             angle = from.position.minus( target ).theta();
+            if ( arcView ) {
+                angle -= Math.PI / 8;
+            }
         }
         var offset = Vector.fromPolar( this.STATE_RADIUS, angle );
         start = from.position.minus( offset );
@@ -467,7 +543,7 @@ NFARenderer.prototype = {
             if ( showText ) {
                 this.renderText(
                     center.minus( Vector.fromPolar( this.SELF_TRANSITION_RADIUS, angle ) ),
-                    via, true
+                    via, true, transitionView.usedInRun
                 );
             }
             ctx.restore();
@@ -475,12 +551,27 @@ NFARenderer.prototype = {
         }
         end = target;
         if ( !transitionView.detached ) {
+            if ( arcView ) {
+                angle += Math.PI / 4;
+            }
             end = end.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
         }
-        this.renderArrow( start, end );
+        this.renderArrow( start, end, ( arc && (! transitionView.detached ) ) );
 
         if ( showText ) {
-            this.renderText( start.plus( end ).scale( 1 / 2 ), via , true);
+            if ( arcView ) {
+                var perpVector = Vector.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
+            }
+            else {
+                var perpVector = new Vector( 0, 0 );
+            }
+            if ( !transitionView.usedInRun ) {
+                var importantChar = '';
+            }
+            else {
+                var importantChar = transitionView.usedInRun;
+            }
+            this.renderText( start.plus( end ).scale( 1 / 2 ).plus( perpVector ), via, true, importantChar );
         }
 
         ctx.restore();
