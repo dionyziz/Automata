@@ -260,7 +260,8 @@ NFAEditor.prototype = {
         renderer.on( 'mouseoutstate', stateOut );
         renderer.on( 'mousedownstate', function( state, e ) {
             self.inputSubmit();
-            if( self.shiftPressed ) {
+
+            if ( e.shiftKey ) {
                 if ( self.selectedElement[ 1 ] != state ) {
                     if ( self.selectedElement[ 0 ] == 'state' ) {
                         self.selectedRectStates[ self.selectedElement[ 1 ] ] = self.selectedElement[ 1 ];
@@ -309,11 +310,13 @@ NFAEditor.prototype = {
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
+                document.removeEventListener( 'mouesup', up );
                 self.dragging = false;
                 canvas.style.cursor = 'default';
             }
             renderer.on( 'mousemove', move );
-            renderer.once( 'mouseup', up );
+            document.addEventListener( 'mouseup', up );
+
             renderer.removeListener( 'mouseoutstate', stateOut );
             renderer.removeListener( 'mouseouttransition', transitionOut );
 
@@ -434,7 +437,7 @@ NFAEditor.prototype = {
                     }
 
                     renderer.removeListener( 'mousemove', move );
-                    renderer.removeListener( 'mouseup', up );
+                    document.removeEventListener( 'mouseup', up );
                     renderer.on( 'mouseoutstate', stateOut );
                     renderer.on( 'mouseouttransition', transitionOut );
                     self.dragging = false;
@@ -442,7 +445,7 @@ NFAEditor.prototype = {
                     transitionView.detached = false;
                 }
                 renderer.on( 'mousemove', move );
-                renderer.once( 'mouseup', up );
+                document.addEventListener( 'mouseup', up );
                 renderer.removeListener( 'mouseoutstate', stateOut );
                 renderer.removeListener( 'mouseouttransition', transitionOut );
                 if ( transition[ 1 ] == '$$' ) {
@@ -490,7 +493,11 @@ NFAEditor.prototype = {
             var client = new Vector( e.clientX, e.clientY )
             var test = renderer.hitTest( client.minus( renderer.offset ) );
             if ( !test ) {
-                var newState = 'q_' + nfaview.nfa.nextnumState;
+                // TODO: addState should produce the new state number
+                //       The caller must remain agnostic of the way this is done.
+                //       Therefore, .nextNumState must remain of private visibility.
+                //       Instead, addState() should RETURN what it has produced.
+                var newState = 'q_' + nfaview.nfa.nextNumState;
 
                 nfaview.nfa.addState( newState );
                 nfaview.states[ newState ].position = new Vector(
