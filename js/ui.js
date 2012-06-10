@@ -40,10 +40,10 @@ var UI = {
         // UI buttons
         $( '.toolbar .run' ).click( Runner.run.bind( Runner ) );
         $( '.runner .next' ).click( Runner.next.bind( Runner ) );
-        $( '.runner .rewind' ).click( Runner.rewind );
-        $( '.runner .prev' ).click( Runner.prev );
-        $( '.runner .fastforward' ).click( Runner.fastforward );
-        $( '.runner .close' ).click( Runner.close );
+        $( '.runner .rewind' ).click( Runner.rewind.bind( Runner ) );
+        $( '.runner .prev' ).click( Runner.prev.bind( Runner ) );
+        $( '.runner .fastforward' ).click( Runner.fastforward.bind( Runner ) );
+        $( '.runner .close' ).click( Runner.close.bind( Runner ) );
 
         // Arrow keys
         $( document ).keydown( function( e ) {
