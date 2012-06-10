@@ -1,0 +1,42 @@
+#sharer {
+    display: none;
+}
+#sharer .icon {
+    position: absolute;
+    left: 323px;
+    top: 20px;
+    color: #ddd;
+    z-index: 0;
+}
+#share {
+    position: absolute;
+    top: 32px;
+    left: 298px;
+    background-color: #ddd;
+    padding: 5px;
+    color: #666;
+    width: 230px;
+    height: 57px;
+    border-radius: 5px;
+    box-shadow: 1px 2px 4px 0px rgba( 0, 0, 0, 0.7 );
+}
+label {
+    display: block;
+    margin-bottom: 8px;
+    width: 100%;
+    padding-left: 2px;
+    padding-top: 5px;
+}
+#share div {
+    width: 100%;
+    position: relative;
+}
+#share input {
+    position: absolute;
+    left: 0px;
+    right: 0;
+}
+#share .close {
+    top: 0;
+    right: 0;
+}

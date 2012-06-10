@@ -6,6 +6,7 @@
         <link rel="icon" type="image/png" href="images/layer-shape-curve.png" />
         <link href='css/style.css' rel='stylesheet' />
         <link href='css/runner.css' rel='stylesheet' />
+        <link href='css/share.css' rel='stylesheet' />
     </head>
     <body>
         <header>
@@ -45,10 +46,19 @@
             </div>
         </div>
         <div id='editor'>
-            <label for="insertError" style="position:absolute; height:10px; color:red; font:bold 14px Georgia, serif; width:100px; left:200px; top:200px;" id="errorSymbol" hidden="hidden">Wrong symbol!</label>
             <input type="hidden" size='8' style='height:20px;width:80px;left:0px;top:0px' id="inputSymbol" />
             <input type="hidden" size='8' style='height:30px;width:30px;left:0px;top:0px' id="changeStateName" />
             <canvas width='800' height='800'></canvas>
+        </div>
+        <div id='sharer'>
+            <span class='icon'>▲</span>
+            <div id='share'>
+                <a href='' class='close' title='Close'></a>
+                <label>Link to your automaton</label>
+                <div class=''>
+                    <input type='text' id='url' />
+                </div>
+            </div>
         </div>
         <script src='js/debug.js'></script>
         <script src='js/object.js'></script>

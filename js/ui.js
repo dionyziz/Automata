@@ -12,7 +12,8 @@ var UI = {
         this.canvas = document.getElementsByTagName( 'canvas' )[ 0 ];
         this.ctx = this.canvas.getContext( '2d' );
 
-        window.onresize = UI.resize.bind( this );
+        $( window ).resize( UI.resize.bind( UI ) );
+
         UI.resize();
         document.onselectstart = function() {
             return false;
@@ -31,9 +32,19 @@ var UI = {
             return false;
         } );
         $( '.toolbar .share' ).click( function() {
+            document.body.style.cursor = 'wait';
             Server.Automaton.create( nfaview.serialize(), function( id ) {
-                alert( 'Created automaton with id = ' + id );
+                document.body.style.cursor = 'default';
+                var input = $( '#sharer input' )[ 0 ];
+                input.value = id;
+                $( '#sharer' ).show();
+                input.select();
+                input.focus();
             } );
+            return false;
+        } );
+        $( '#sharer .close' ).click( function() {
+            $( '#sharer' ).hide();
             return false;
         } );
 
