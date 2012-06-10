@@ -76,6 +76,7 @@ var UI = {
             );
             $( '.runner' ).show();
             self.displayRunStatus();
+            runner.enabled = true;
         }
 
         $( '.toolbar .run' ).click( function() {
@@ -114,51 +115,94 @@ var UI = {
                 self.displayRejectedStatus();
             }
         }
-        $( '.runner .next' ).click( function() {
-            ++self.runStep;
-            if ( self.runStep > self.inputString.length ) {
-                self.runStep = self.inputString.length;
-                return false;
-            }
+        var runner = {
+            enabled: false,
+            next: function() {
+                ++self.runStep;
+                if ( self.runStep > self.inputString.length ) {
+                    self.runStep = self.inputString.length;
+                    return false;
+                }
 
-            if ( editor.runStep() ) {
+                if ( editor.runStep() ) {
+                    self.displayRunStatus();
+                    displayAcceptanceResult();
+                }
+                else {
+                    self.displayRejectedStatus();
+                }
+                return false;
+            },
+            rewind: function() {
+                beginRunning();
+                return false;
+            },
+            prev: function() {
+                var step = Math.max( 0, self.runStep - 1 );
+
+                beginRunning();
+
+                self.runStep = step;
+
+                editor.gotoStep( self.inputString, self.runStep );
+                self.displayRunStatus();
+
+                return false;
+            },
+            fastforward: function() {
+                beginRunning();
+                self.runStep = self.inputString.length;
+                editor.gotoStep( self.inputString, self.runStep );
                 self.displayRunStatus();
                 displayAcceptanceResult();
+
+                return false;
+            },
+            close: function() {
+                editor.setRun( false );
+                $( '.runner' ).hide();
+                this.enabled = false;
+                return false;
             }
-            else {
-                self.displayRejectedStatus();
+        };
+
+        // UI buttons
+        $( '.runner .next' ).click( runner.next );
+        $( '.runner .rewind' ).click( runner.rewind );
+        $( '.runner .prev' ).click( runner.prev );
+        $( '.runner .fastforward' ).click( runner.fastforward );
+        $( '.runner .close' ).click( runner.close );
+
+        // Arrow keys
+        $( document ).keydown( function( e ) {
+            console.log( e.keyCode );
+            switch ( e.keyCode ) {
+                case 37: // left
+                    if ( runner.enabled ) {
+                        runner.prev();
+                    }
+                    break;
+                case 38: // up
+                    if ( runner.enabled ) {
+                        runner.rewind();
+                    }
+                    break;
+                case 39: // right
+                    if ( runner.enabled ) {
+                        runner.next();
+                    }
+                    break;
+                case 40: // down
+                    if ( runner.enabled ) {
+                        runner.fastforward();
+                    }
+                    break;
+                case 27: // escape
+                    if ( runner.enabled ) {
+                        runner.close();
+                    }
+                    break;
             }
-            return false;
-        } );
-        $( '.runner .rewind' ).click( function() {
-            beginRunning();
-            return false;
-        } );
-        $( '.runner .prev' ).click( function() {
-            var step = Math.max( 0, self.runStep - 1 );
-
-            beginRunning();
-
-            self.runStep = step;
-
-            editor.gotoStep( self.inputString, self.runStep );
-            self.displayRunStatus();
-
-            return false;
-        } );
-        $( '.runner .fastforward' ).click( function() {
-            beginRunning();
-            self.runStep = self.inputString.length;
-            editor.gotoStep( self.inputString, self.runStep );
-            self.displayRunStatus();
-            displayAcceptanceResult();
-
-            return false;
-        } );
-        $( '.runner .close' ).click( function() {
-            editor.setRun( false );
-            $( '.runner' ).hide();
-            return false;
         } );
 
         var inputSymbol = document.getElementById( 'inputSymbol' );
