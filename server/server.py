@@ -14,6 +14,14 @@ elif path.exists( 'automata.cfg' ):
 else:
     raise NameError( 'Automata is not configured' )
 
+host = config.get( 'server', 'host' )
+port = config.get( 'server', 'port' )
+with open( '../.htaccess', 'w' ) as htaccess:
+    htaccess.write( """<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule api/ http://%s:%s/ [P]
+</IfModule>""" % ( host, port ) )
+
 def initdb():
     hostname = config.get( 'db', 'hostname' )
     username = config.get( 'db', 'username' )
@@ -33,4 +41,4 @@ for controller in listdir( 'controllers' ):
         controllerClass( app, request )
 
 debug( True )
-run( app, host = config.get( 'server', 'host' ), port = config.get( 'server', 'port' ), reloader = True )
+run( app, host = host, port = port, reloader = True )
