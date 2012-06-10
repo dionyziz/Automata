@@ -19,7 +19,7 @@ port = config.get( 'server', 'port' )
 with open( '../.htaccess', 'w' ) as htaccess:
     htaccess.write( """<IfModule mod_rewrite.c>
     RewriteEngine On
-    RewriteRule api/ http://%s:%s/ [P]
+    RewriteRule api/(.*) http://%s:%s/$1 [P,QSA]
 </IfModule>""" % ( host, port ) )
 
 def initdb():

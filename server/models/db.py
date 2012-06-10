@@ -1,4 +1,5 @@
 import MySQLdb
+import MySQLdb.cursors
 
 class Database:
     def __init__( self, hostname, username, password, database ):
@@ -12,7 +13,9 @@ class Database:
             passwd = password,
             db = database,
             use_unicode = True,
-            charset = 'UTF8' )
+            charset = 'UTF8',
+            cursorclass = MySQLdb.cursors.DictCursor
+        )
 
     def close( self ):
         self.conn.close()
@@ -38,20 +41,22 @@ class Database:
         return self.query( sql, tuple( data ) )
 
     def selectOne( self, table, where = {}, select = ( '*' ) ):
-        rows = list( self.select( table, where, select ) )
-        if len( rows ) == 0:
+        rows = self.select( table, where, select )
+        if rows is None:
             return None
         return rows[ 0 ]
 
-    def insert( self, table, cols, values ):
+    def insert( self, table, data ):
         """Runs an INSERT query of this form:
             INSERT INTO table ( cols )
             VALUES ( %s in values )"""
+        cols = tuple( data.keys() )
+        values = tuple( data.values() )
         sql = """INSERT INTO %s ( %s ) VALUES ( %s )""" % ( table,
             ', '.join( cols ),
             ', '.join( [ '%s' for col in cols ] ) )
         cursor = self.conn.cursor()
-        cursor.executemany( sql, values )
+        cursor.execute( sql, values )
         return self.conn.insert_id()
 
 singletonDB = None
