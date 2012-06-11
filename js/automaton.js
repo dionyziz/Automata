@@ -25,7 +25,7 @@ function NFA( alphabet ) {
     };
     this.startState = 's';
     // set of states that accept, array of state keys
-    this.accept = [];
+    this.accept = {};
     this.input = '';
     this.reset();
     EventEmitter.call( this );
@@ -216,11 +216,3 @@ NFA.prototype = {
     }
 };
 NFA.extend( EventEmitter );
-
-NFA.deserialize = function( source ) {
-    var nfa = ( new NFA( [] ) );
-    
-    nfa.deserialize( source ); 
-
-    return nfa;
-};

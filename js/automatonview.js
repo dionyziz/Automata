@@ -135,7 +135,7 @@ NFAView.prototype = {
         for ( var attr in source ) {
             switch( attr ) {
                 case 'nfa':
-                    this.nfa = NFA.deserialize( source[ attr ] );
+                    this.nfa.deserialize( source[ attr ] );
                     break;
                 default:
                     this[ attr ] = source[ attr ];

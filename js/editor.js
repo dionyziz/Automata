@@ -95,7 +95,7 @@ NFAEditor.prototype = {
                 this.inputSymbol.value = '';
                 this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
                 $( this.errorSymbol ).hide();
-                this.inputSymbol.type = 'hidden';
+                $( this.inputSymbol ).hide();
                 this.transitionToChange = false;
             }
             else {
@@ -443,7 +443,7 @@ NFAEditor.prototype = {
                         self.transitionToChange = transition;
                         self.inputSymbol.style.left = '' + newx + 'px' ;
                         self.inputSymbol.style.top = '' + newy + 'px' ;
-                        self.inputSymbol.type = 'text';
+                        $( self.inputSymbol ).show();
                         self.inputSymbol.focus();
                         self.elementDeselected();
                     }
