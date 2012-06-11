@@ -1,26 +1,6 @@
 var UI = {
     canvas: null,
     ctx: null,
-    inputString: '',
-    runStep: '',
-    displayRunDone: function() {
-    },
-    displayRejectedStatus: function() {
-        $( '#runstatus' ).html( 'Rejected' );
-        $( '#runstatus' ).addClass( 'reject icon' );
-        this.displayRunDone();
-    },
-    displayAcceptedStatus: function() {
-        $( '#runstatus' ).html( 'Accepted' );
-        $( '#runstatus' ).addClass( 'accept icon' );
-        this.displayRunDone();
-    },
-    displayRunStatus: function() {
-        $( '#runstatus' ).html( 'Running' );
-        $( '#runstatus' ).removeClass( 'reject accept icon' );
-        $( '#runinput .state' ).removeClass( 'selected' );
-        $( $( '#runinput .state' )[ this.runStep ] ).addClass( 'selected' );
-    },
     resize: function() {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight - 39;
@@ -32,7 +12,8 @@ var UI = {
         this.canvas = document.getElementsByTagName( 'canvas' )[ 0 ];
         this.ctx = this.canvas.getContext( '2d' );
 
-        window.onresize = UI.resize.bind( this );
+        $( window ).resize( UI.resize.bind( UI ) );
+
         UI.resize();
         document.onselectstart = function() {
             return false;
@@ -51,115 +32,59 @@ var UI = {
             return false;
         } );
         $( '.toolbar .share' ).click( function() {
-            alert( 'Coming soon! :)' );
+            document.body.style.cursor = 'wait';
+            Server.Automaton.create( nfaview.serialize(), function( id ) {
+                document.body.style.cursor = 'default';
+                var input = $( '#sharer input' )[ 0 ];
+                input.value = 'http://automata.discrete.gr/automata/#z' + id;
+                $( '#sharer' ).show();
+                input.select();
+                input.focus();
+            } );
+            return false;
+        } );
+        $( '#sharer .close' ).click( function() {
+            $( '#sharer' ).hide();
             return false;
         } );
 
-        this.runStep = 0;
-        var self = this;
+        // UI buttons
+        $( '.toolbar .run' ).click( Runner.run.bind( Runner ) );
+        $( '.runner .next' ).click( Runner.next.bind( Runner ) );
+        $( '.runner .rewind' ).click( Runner.rewind.bind( Runner ) );
+        $( '.runner .prev' ).click( Runner.prev.bind( Runner ) );
+        $( '.runner .fastforward' ).click( Runner.fastforward.bind( Runner ) );
+        $( '.runner .close' ).click( Runner.close.bind( Runner ) );
 
-        function beginRunning() {
-            self.runStep = 0;
-            editor.run( self.inputString );
-            ol = $( '#runinput' );
-            ol.empty();
-            for ( var i = 0; i < self.inputString.length; ++i ) {
-                ol.append(
-                    $( '<li class="state">&nbsp;</li>' )
-                );
-                ol.append(
-                    $( '<li class="transition">' + self.inputString[ i ] + '</li>' )
-                );
-            }
-            ol.append(
-                $( '<li class="state">&nbsp;</li>' )
-            );
-            $( '.runner' ).show();
-            self.displayRunStatus();
-        }
-
-        $( '.toolbar .run' ).click( function() {
-            self.inputString = prompt( 'Enter input string: ', 'abba' );
-
-            if ( typeof self.inputString != 'string' ) {
-                return false;
-            }
-            for ( var i = 0; i < self.inputString.length; ++i ) {
-                if ( !( self.inputString[ i ] in nfaview.nfa.alphabet ) ) {
-                    return false;
-                }
-            }
-
-            beginRunning();
-            return false;
-        } );
-        function displayAcceptanceResult() {
-            if ( self.runStep == self.inputString.length ) {
-                var accepting = false;
-
-                for ( var state in nfaview.nfa.currentStates ) {
-                    if ( nfaview.nfa.accept[ state ] ) {
-                        accepting = true;
-                        break;
+        // Arrow keys
+        $( document ).keydown( function( e ) {
+            switch ( e.keyCode ) {
+                case 37: // left
+                    if ( Runner.enabled ) {
+                        Runner.prev();
                     }
-                }
-                if ( accepting ) {
-                    self.displayAcceptedStatus();
-                }
-                else {
-                    self.displayRejectedStatus();
-                }
+                    break;
+                case 38: // up
+                    if ( Runner.enabled ) {
+                        Runner.rewind();
+                    }
+                    break;
+                case 39: // right
+                    if ( Runner.enabled ) {
+                        Runner.next();
+                    }
+                    break;
+                case 40: // down
+                    if ( Runner.enabled ) {
+                        Runner.fastforward();
+                    }
+                    break;
+                case 27: // escape
+                    if ( Runner.enabled ) {
+                        Runner.close();
+                    }
+                    break;
             }
-            else if ( nfaview.nfa.currentStates.length == 0 ) {
-                self.displayRejectedStatus();
-            }
-        }
-
-        $( '.runner .next' ).click( function() {
-            ++self.runStep;
-            if ( self.runStep > self.inputString.length ) {
-                self.runStep = self.inputString.length;
-                return false;
-            }
-
-            if ( editor.runStep() ) {
-                self.displayRunStatus();
-                displayAcceptanceResult();
-            }
-            else {
-                self.displayRejectedStatus();
-            }
-            return false;
-        } );
-        $( '.runner .rewind' ).click( function() {
-            beginRunning();
-            return false;
-        } );
-        $( '.runner .prev' ).click( function() {
-            var step = Math.max( 0, self.runStep - 1 );
-
-            beginRunning();
-
-            self.runStep = step;
-
-            editor.gotoStep( self.inputString, self.runStep );
-            self.displayRunStatus();
-
-            return false;
-        } );
-        $( '.runner .fastforward' ).click( function() {
-            beginRunning();
-            self.runStep = self.inputString.length;
-            editor.gotoStep( self.inputString, self.runStep );
-            self.displayRunStatus();
-            displayAcceptanceResult();
-
-            return false;
-        } );
-        $( '.runner .close' ).click( function() {
-            editor.setRun( false );
-            $( '.runner' ).hide();
-            return false;
         } );
 
         var inputSymbol = document.getElementById( 'inputSymbol' );
@@ -167,6 +92,21 @@ var UI = {
         var changeStateName = document.getElementById( 'changeStateName' );
         editor = new NFAEditor( this.canvas, nfaview, [ inputSymbol, errorSymbol ], changeStateName );
         editor.play();
+
+        Runner.init( editor );
+
+        if ( document.location.hash.substr( 0, 2 ) == '#v' ) {
+            var nfaId = document.location.hash.split( 'v' )[ 1 ];
+
+            document.body.style.cursor = 'wait';
+
+            console.log( 'Loading NFA ' + nfaId );
+
+            Server.Automaton.view( nfaId, function ( automaton ) {
+                document.body.style.cursor = 'default';
+                nfaview.deserialize( automaton.data );
+            } );
+        }
     }
 };
 UI.init();

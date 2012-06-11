@@ -77,7 +77,26 @@ NFAEditor.prototype = {
         this.selectedRectStates = {};
         this.renderer.selectedStates = {};
     },
-    inputSubmit : function() {
+    inverseOneAccepting: function( state ) {
+        if ( nfa.accept[ state ] ){
+            nfa.removeAcceptingState( state );
+        }
+        else {
+            nfa.addAcceptingState( state );
+        }
+    },
+    inverseAccepting: function() {
+        if ( this.selectedElement[ 0 ] == 'state' ) {
+            this.inverseOneAccepting( this.selectedElement[ 1 ] );
+        }
+
+        for ( var selstate in this.selectedRectStates ) {
+            if ( selstate != this.selectedElement[ 1 ] ) {
+                this.inverseOneAccepting( selstate );
+            }
+        }
+    },
+    inputSubmit: function() {
         if ( this.transitionToChange != false ) {
             var sigma = this.inputSymbol.value;
             var insertOk = false;
@@ -94,8 +113,8 @@ NFAEditor.prototype = {
             if ( insertOk ) {
                 this.inputSymbol.value = '';
                 this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
-                this.errorSymbol.hidden = true;
-                this.inputSymbol.type = 'hidden';
+                $( this.errorSymbol ).hide();
+                $( this.inputSymbol ).hide();
                 this.transitionToChange = false;
             }
             else {
@@ -103,14 +122,14 @@ NFAEditor.prototype = {
                 var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.style.height ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
-                this.errorSymbol.hidden = false;
+                $( this.errorSymbol ).show();
             }
         }
         else if ( this.stateToChangeName != false ) {
             var newName = this.changeStateName.value;
             this.nfaview.stateName[ this.stateToChangeName ] = newName;
             this.changeStateName.value = '';
-            this.changeStateName.type = 'hidden';
+            $( this.changeStateName ).hide();
             this.stateToChangeName = false;
         }
         else if ( this.transitionToChangeName != false ) {
@@ -139,8 +158,8 @@ NFAEditor.prototype = {
                         this.nfa.deleteTransition( this.transitionToChangeName[ 0 ], sigma, this.transitionToChangeName[ 2 ] );
                     }
                 }
-                this.errorSymbol.hidden = true;
-                this.inputSymbol.type = 'hidden';
+                $( this.errorSymbol ).hide();
+                $( this.inputSymbol ).hide();
                 this.elementDeselected();
                 this.transitionToChangeName = false;
             }
@@ -149,7 +168,7 @@ NFAEditor.prototype = {
                 var newy = parseFloat( this.inputSymbol.style.top ) + parseFloat( this.inputSymbol.offsetHeight ) + 8;
                 this.errorSymbol.style.left = '' + newx + 'px' ;
                 this.errorSymbol.style.top = '' + newy + 'px' ;
-                this.errorSymbol.hidden = false;
+                $( this.errorSymbol ).show();
             }
         }
     },
@@ -260,15 +279,22 @@ NFAEditor.prototype = {
         renderer.on( 'mouseoutstate', stateOut );
         renderer.on( 'mousedownstate', function( state, e ) {
             self.inputSubmit();
-            if( self.shiftPressed ) {
+
+            if ( e.shiftKey ) {
                 if ( self.selectedElement[ 1 ] != state ) {
                     if ( self.selectedElement[ 0 ] == 'state' ) {
                         self.selectedRectStates[ self.selectedElement[ 1 ] ] = self.selectedElement[ 1 ];
                         nfaview.states[ self.selectedElement[ 1 ] ].importance = 'strong';
                     }
 
-                    self.selectedRectStates[ state ] = state;
-                    nfaview.states[ state ].importance = 'strong';
+                    if ( self.selectedRectStates[ state ] == state ) {
+                        delete self.selectedRectStates[ state ];
+                        nfaview.states[ state ].importance = 'normal';
+                    }
+                    else {
+                        self.selectedRectStates[ state ] = state;
+                        nfaview.states[ state ].importance = 'strong';
+                    }
                     return;
                 }
             }
@@ -306,18 +332,32 @@ NFAEditor.prototype = {
                 }
             }
             function up( e ) {
+                // Enable this line to simulate 'once' EventEmmitter functionality from below
+                document.removeEventListener( 'mouseup', up );
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
                 self.dragging = false;
                 canvas.style.cursor = 'default';
             }
-            renderer.on( 'mousemove', move );
-            renderer.once( 'mouseup', up );
-            renderer.removeListener( 'mouseoutstate', stateOut );
-            renderer.removeListener( 'mouseouttransition', transitionOut );
+            // FIXED: up() function seems to be getting called on mouse down
+            //       for some weird reason (a but in the renderer probably),
+            //       and if it's removed then the create transition
+            //       functionality fais to work correctly. Not sure what's going on here,
+            //       but this needs to be replaced with a document.addEventListener
+            //       so that when mouseup'ing outside the browser window, the automaton
+            //       state that is being dragged is still released.
+            // FIXED: enable this line:
+            //       document.addEventListener( 'mouseup', up );
+            // FIXED: disable this line:
+            // Not sure why all this is happening.
 
             if ( self.mode == 'moveState' ) {
+                renderer.on( 'mousemove', move );
+                document.addEventListener( 'mouseup', up );
+                renderer.removeListener( 'mouseoutstate', stateOut );
+                renderer.removeListener( 'mouseouttransition', transitionOut );
+
                 if ( self.selectedRectStates[ state ] != state ) {
                     self.elementSelected( [ 'state', state ] );
                 }
@@ -326,7 +366,6 @@ NFAEditor.prototype = {
                 nfaview.newtransitionFrom = state;
                 nfaview.newtransition.position = nfaview.states[ state ].position;
                 nfaview.states[ state ].importance = 'normal';
-                renderer.emit( 'mouseup', e );
                 renderer.emit( 'mousenewtransition', [ state, '$$', false, false ], e );
             }
         } );
@@ -351,6 +390,7 @@ NFAEditor.prototype = {
                     transitionView.position = new Vector ( e.clientX, e.clientY - 39 ); // TODO fix this to be more general...
                 }
                 function up( e ) {
+                    document.removeEventListener( 'mouseup', up );
                     var client = new Vector( e.clientX, e.clientY );
                     var test = renderer.hitTest( client.minus( renderer.offset ) );
                     if ( test[ 0 ] == 'state' ) {
@@ -375,7 +415,7 @@ NFAEditor.prototype = {
                 }
 
                 renderer.on( 'mousemove', move );
-                renderer.once( 'mouseup', up );
+                document.addEventListener( 'mouseup', up );
                 renderer.removeListener( 'mouseoutstate', stateOut );
                 renderer.removeListener( 'mouseouttransition', transitionOut );
             }
@@ -428,13 +468,13 @@ NFAEditor.prototype = {
                         self.transitionToChange = transition;
                         self.inputSymbol.style.left = '' + newx + 'px' ;
                         self.inputSymbol.style.top = '' + newy + 'px' ;
-                        self.inputSymbol.type = 'text';
+                        $( self.inputSymbol ).show();
                         self.inputSymbol.focus();
                         self.elementDeselected();
                     }
 
                     renderer.removeListener( 'mousemove', move );
-                    renderer.removeListener( 'mouseup', up );
+                    document.removeEventListener( 'mouseup', up );
                     renderer.on( 'mouseoutstate', stateOut );
                     renderer.on( 'mouseouttransition', transitionOut );
                     self.dragging = false;
@@ -442,11 +482,11 @@ NFAEditor.prototype = {
                     transitionView.detached = false;
                 }
                 renderer.on( 'mousemove', move );
-                renderer.once( 'mouseup', up );
+                document.addEventListener( 'mouseup', up );
                 renderer.removeListener( 'mouseoutstate', stateOut );
                 renderer.removeListener( 'mouseouttransition', transitionOut );
                 if ( transition[ 1 ] == '$$' ) {
-                    renderer.emit( 'mouseup', e );
+                    up( e );
                 }
                 self.elementSelected( [ 'transition', transition ] );
             }
@@ -471,6 +511,7 @@ NFAEditor.prototype = {
                     renderer.selectionRectTo = newClient;
                 }
                 function up( e ) {
+                    document.removeEventListener( 'mouseup', up );
                     renderer.removeListener( 'mousemove', move );
                     renderer.selectionRectShow = false;
                     renderer.on( 'mouseoutstate', stateOut );
@@ -479,7 +520,7 @@ NFAEditor.prototype = {
                     canvas.style.cursor = 'default';
                 }
                 renderer.on( 'mousemove', move );
-                renderer.once( 'mouseup', up );
+                document.addEventListener( 'mouseup', up );
                 renderer.removeListener( 'mouseoutstate', stateOut );
                 renderer.removeListener( 'mouseouttransition', transitionOut );
             }
@@ -490,7 +531,11 @@ NFAEditor.prototype = {
             var client = new Vector( e.clientX, e.clientY )
             var test = renderer.hitTest( client.minus( renderer.offset ) );
             if ( !test ) {
-                var newState = 'q_' + nfaview.nfa.nextnumState;
+                // TODO: addState should produce the new state number
+                //       The caller must remain agnostic of the way this is done.
+                //       Therefore, .nextNumState must remain of private visibility.
+                //       Instead, addState() should RETURN what it has produced.
+                var newState = 'q_' + nfaview.nfa.nextNumState;
 
                 nfaview.nfa.addState( newState );
                 nfaview.states[ newState ].position = new Vector(
@@ -504,7 +549,7 @@ NFAEditor.prototype = {
                 var newy = nfaview.states[ test[ 1 ] ].position.y + ( parseFloat( self.changeStateName.style.height ) / 2 ) + 5;
                 self.changeStateName.style.left = newx + 'px';
                 self.changeStateName.style.top = newy + 'px';
-                self.changeStateName.type = 'text';
+                $( self.changeStateName ).show();
                 self.changeStateName.value = nfaview.stateName[ test[ 1 ] ];
                 self.changeStateName.focus();
             }
@@ -525,7 +570,7 @@ NFAEditor.prototype = {
                 }
 
                 if ( arcView ) {
-                    var perpVector = Vector.perpVector ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position,
+                    var perpVector = Geometry.perpVector ( nfaview.states[ self.transitionToChangeName[ 0 ] ].position,
                                                          nfaview.states[ self.transitionToChangeName[ 2 ] ].position,
                                                          renderer.ARC_TRANSITION_OFFSET + 8 );
                 }
@@ -536,7 +581,7 @@ NFAEditor.prototype = {
                 newPos = newPos.plus( perpVector );
                 self.inputSymbol.style.left = newPos.x + 'px';
                 self.inputSymbol.style.top = newPos.y + 'px';
-                self.inputSymbol.type = 'text';
+                $( self.inputSymbol ).show();
                 var currentVal = '';
                 for ( var symbol in nfaview.invtransitions[ self.transitionToChangeName[ 0 ] ][ self.transitionToChangeName[ 2 ] ] ) {
                     currentVal += symbol + ',';
@@ -578,8 +623,8 @@ NFAEditor.prototype = {
                     if ( self.transitionToChange != false ) {
                         self.inputSymbol.value = '';
                         nfa.deleteTransition( self.transitionToChange[ 0 ], self.transitionToChange[ 1 ], self.transitionToChange[ 2 ] );
-                        self.errorSymbol.hidden = true;
-                        self.inputSymbol.type = 'hidden';
+                        $( self.errorSymbol ).hide();
+                        $( self.inputSymbol ).hide();
                         self.transitionToChange = false;
                     }
                     else if ( self.stateToChangeName != false ) {
@@ -589,35 +634,18 @@ NFAEditor.prototype = {
                     }
                     else if ( self.transitionToChangeName != false ) {
                         self.inputSymbol.value = '';
-                        self.errorSymbol.hidden = true;
-                        self.inputSymbol.type = 'hidden';
+                        $( self.errorSymbol ).hide();
+                        $( self.inputSymbol ).hide();
                         self.transitionToChangeName = false;
                     }
                     break;
                 case 32: //space
-                    if ( self.selectedElement[ 0 ] == 'state' ) {
-                        if ( nfa.accept[ self.selectedElement[ 1 ] ] ){
-                            nfa.removeAcceptingState( self.selectedElement[ 1 ] );
-                        }
-                        else {
-                            nfa.addAcceptingState( self.selectedElement[ 1 ] );
-                        }
-                    }
+                    self.inverseAccepting();
                     break;
                 case 73: // i -- change initial state
                     if ( self.selectedElement[ 0 ] == 'state' ){
                         nfa.startState = self.selectedElement[ 1 ];
                     }
-                    break;
-                case 16: //shift
-                    self.shiftPressed = true;
-                    break;
-            }
-        };
-        document.onkeyup = function( e ) {
-            switch ( e.keyCode ) {
-                case 16: //shift
-                    self.shiftPressed = false;
                     break;
             }
         };

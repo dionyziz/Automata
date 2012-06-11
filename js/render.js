@@ -115,7 +115,7 @@ NFARenderer.prototype = {
         for ( var i = 0; i < nfa.numStates; ++i ) {
             if ( typeof stateArray[ i ] != 'undefined' ) {
                 var state = stateArray[ i ].state;
-                var outstatesnum = nfa.transitionsnum[ state ];
+                var outstatesnum = nfa.transitionsNum[ state ];
 
                 for ( var j = 0; j < nfa.numStates; ++j ) {
                     var outstring = '';
@@ -278,7 +278,7 @@ NFARenderer.prototype = {
         var theta = Math.atan2( to.y - from.y, to.x - from.x );
 
         if ( arc ) {
-            var cycl = Vector.findCycle( from, to, this.ARC_TRANSITION_OFFSET );
+            var cycl = Geometry.findCycle( from, to, this.ARC_TRANSITION_OFFSET );
             var center = cycl[ 0 ];
 
             var fromToCenter = from.minus( center );
@@ -560,7 +560,7 @@ NFARenderer.prototype = {
 
         if ( showText ) {
             if ( arcView ) {
-                var perpVector = Vector.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
+                var perpVector = Geometry.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
             }
             else {
                 var perpVector = new Vector( 0, 0 );
@@ -594,14 +594,19 @@ NFARenderer.prototype = {
                 var j = 0;
                 for ( var sigma in nfa.alphabet ) {
                     for ( var to in nfa.transitions[ state ][ sigma ] ) {
-                        test = this.hitTestTransition(
-                            mouse,
-                            nfaview.states[ state ].position,
-                            sigma,
-                            nfaview.states[ to ].position
-                        );
-                        if ( test ) {
-                            return [ 'transition', [ state, sigma, to ] ];
+                        try { 
+                            test = this.hitTestTransition(
+                                mouse,
+                                nfaview.states[ state ].position,
+                                sigma,
+                                nfaview.states[ to ].position
+                            );
+                            if ( test ) {
+                                return [ 'transition', [ state, sigma, to ] ];
+                            }
+                        }
+                        catch ( e ) {
+                            console.log( 'We got a problem' );
                         }
                         ++j;
                     }

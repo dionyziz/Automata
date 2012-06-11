@@ -26,6 +26,7 @@ Object.defineProperty( Function.prototype, "extend", {
     */
     value: function() {
         var method, l = arguments.length;
+
         while ( l-- ) {
             var parent = arguments[ l ];
 

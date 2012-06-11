@@ -6,6 +6,7 @@
         <link rel="icon" type="image/png" href="images/layer-shape-curve.png" />
         <link href='css/style.css' rel='stylesheet' />
         <link href='css/runner.css' rel='stylesheet' />
+        <link href='css/share.css' rel='stylesheet' />
     </head>
     <body>
         <header>
@@ -21,7 +22,7 @@
                 <li class='selected move button'><a href=''><span></span>Move states</a></li>
                 <li class='transition button'><a href=''><span></span>Create transition</a></li>
                 <li class='run button'><a href=''><span></span>Run</a></li>
-                <!-- <li class='share button'><a href=''><span></span>Share</a></li> -->
+                <li class='share button'><a href=''><span></span>Share</a></li>
             </ol>
             <!--
             <ol class='account'>
@@ -45,21 +46,34 @@
             </div>
         </div>
         <div id='editor'>
-            <label for="insertError" style="position:absolute; height:10px; color:red; font:bold 14px Georgia, serif; width:100px; left:200px; top:200px;" id="errorSymbol" hidden="hidden">Wrong symbol!</label>
-            <input type="hidden" size='8' style='height:20px;width:80px;left:0px;top:0px' id="inputSymbol" />
-            <input type="hidden" size='8' style='height:30px;width:30px;left:0px;top:0px' id="changeStateName" />
+            <label for="insertError" style="position:absolute; height:10px; color:red; font:bold 14px Georgia, serif; width:100px; left:200px; top:200px; display: none" id="errorSymbol">Wrong symbol!</label>
+            <input type="text" size='8' style='height:20px;width:80px;left:0px;top:0px;display:none' id="inputSymbol" />
+            <input type="text" size='8' style='height:30px;width:30px;left:0px;top:0px;display:none' id="changeStateName" />
             <canvas width='800' height='800'></canvas>
+        </div>
+        <div id='sharer'>
+            <span class='icon'>▲</span>
+            <div id='share'>
+                <a href='' class='close' title='Close'></a>
+                <label>Link to your automaton</label>
+                <div class=''>
+                    <input type='text' id='url' />
+                </div>
+            </div>
         </div>
         <script src='js/debug.js'></script>
         <script src='js/object.js'></script>
         <script src='js/eventemitter.js'></script>
+        <script src='js/server.js'></script>
         <script src='js/math.js'></script>
+        <script src='js/geometry.js'></script>
         <script src='js/automaton.js'></script>
         <script src='js/automatonview.js'></script>
         <script src='js/render.js'></script>
         <script src='js/editor.js'></script>
         <script src='js/test.js'></script>
         <script src='js/jquery-1.7.2.min.js'></script>
+        <script src='js/runner.js'></script>
         <script src='js/ui.js'></script>
     </body>
 </html>

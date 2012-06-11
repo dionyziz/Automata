@@ -13,7 +13,7 @@ function NFAView( nfa ) {
         importance: 'normal',
         detached: true,
         usedInRun: false,
-    } ;
+    };
     this.newtransitionFrom = false;
     function stateAdded( state ) {
         self.states[ state ] = {
@@ -30,17 +30,17 @@ function NFAView( nfa ) {
             self.invtransitions[ state ][ to ] = {};
             self.invtransitions[ to ][ state ] = {};
             self.viewtransitions[ state ][ to ] = {
-                    position: new Vector( 0, 0 ),
-                    importance: 'normal',
-                    detached: false,
-                    usedInRun: false,
-                };
+                position: new Vector( 0, 0 ),
+                importance: 'normal',
+                detached: false,
+                usedInRun: false,
+            };
             self.viewtransitions[ to ][ state ] = {
-                    position: new Vector( 0, 0 ),
-                    importance: 'normal',
-                    detached: false,
-                    usedInRun: false
-                };
+                position: new Vector( 0, 0 ),
+                importance: 'normal',
+                detached: false,
+                usedInRun: false
+            };
         }
 
         for ( var sigma in nfa.alphabet ) {
@@ -117,3 +117,50 @@ function NFAView( nfa ) {
         }
     } );
 }
+NFAView.prototype = {
+    constructor: 'NFAView',
+    serialize: function() {
+        return JSON.stringify( {
+            states: this.states,
+            transitions: this.transitions,
+            viewtransitions: this.viewtransitions,
+            invtransitions: this.invtransitions,
+            stateName: this.stateName,
+            nfa: this.nfa.serialize()
+        } );
+    },
+    deserialize: function( source ) {
+        console.log( 'Deserializing NFAView' );
+        source = JSON.parse( source );
+        for ( var attr in source ) {
+            switch( attr ) {
+                case 'nfa':
+                    this.nfa.deserialize( source[ attr ] );
+                    break;
+                default:
+                    this[ attr ] = source[ attr ];
+                    break;
+            }
+        }
+
+        for ( var from in this.nfa.states ) {
+            var r1 = this.states[ from ].position;
+
+            this.states[ from ].position = new Vector( r1.x, r1.y );
+
+            for ( var to in this.nfa.states ) {
+                var r2 = this.viewtransitions[ from ][ to ].position;
+
+                this.viewtransitions[ from ][ to ].position = new Vector( r2.x, r2.y );
+
+                for ( var sigma in this.nfa.alphabet ) {
+                    if ( typeof this.transitions[ from ][ sigma ][ to ] != 'undefined' ) {
+                        var r3 = this.transitions[ from ][ sigma ][ to ].position;
+
+                        this.transitions[ from ][ sigma ][ to ].position = new Vector( r3.x, r3.y );
+                    }
+                }
+            }
+        }
+    }
+};

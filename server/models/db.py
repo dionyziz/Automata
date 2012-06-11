@@ -1,4 +1,5 @@
-import _mysql
+import MySQLdb
+import MySQLdb.cursors
 
 class Database:
     def __init__( self, hostname, username, password, database ):
@@ -6,40 +7,68 @@ class Database:
         self.username = username
         self.database = database
 
-        self.conn = _mysql.connect( host = hostname, user = username, passwd = password, db = database )
-
-    def eq( value ):
-        return [ str( x ) + ' = \'' + str( value[ x ] ) + '\'' for x in value ]
+        self.conn = MySQLdb.connect(
+            host = hostname,
+            user = username,
+            passwd = password,
+            db = database,
+            use_unicode = True,
+            charset = 'UTF8',
+            cursorclass = MySQLdb.cursors.DictCursor
+        )
 
     def close( self ):
         self.conn.close()
 
-    def query( self, sql ):
-        self.conn.query( sql )
-        return self.conn.store_result()
+    def query( self, sql, data ):
+        cursor = self.conn.cursor()
+        cursor.execute( sql, data )
+        return cursor.fetchall()
 
-    def array( self, sql ):
-        return self.query( sql ).fetch_row( maxrows = 0, how = 1 )
-
-    def select( self, table, where = {}, select = [ '*' ] ):
+    def select( self, table, where = {}, select = ( '*' ) ):
+        """Runs a SELECT query in this form:
+            SELECT select FROM table
+            WHERE i in where < %s"""
+        sql = """SELECT %s FROM %s""" % ( ', '.join( select ), table )
         if len( where ) == 0:
-            return self.array( 'SELECT %s FROM %s' % ( ','.join( select ), table ) )
-        return self.array( 'SELECT %s FROM %s WHERE %s' % ( ','.join( select ), table, ' AND '.join( self.eq( where ) ) ) )
+            return self.query( sql, () )
 
-    def insert( self, table, value ):
-        self.query( 'INSERT INTO %s SET %s' % ( table, ','.join( self.eq( value ) ) ) )
+        sql += """ WHERE"""
+        data = []
+        for w in where:
+            sql += """ """ + str( w ) + """ = %s"""
+            data.append( where[ w ] )
+        return self.query( sql, tuple( data ) )
+
+    def selectOne( self, table, where = {}, select = ( '*' ) ):
+        rows = self.select( table, where, select )
+        if rows is None:
+            return None
+        return rows[ 0 ]
+
+    def insert( self, table, data ):
+        """Runs an INSERT query of this form:
+            INSERT INTO table ( cols )
+            VALUES ( %s in values )"""
+        cols = tuple( data.keys() )
+        values = tuple( data.values() )
+        sql = """INSERT INTO %s ( %s ) VALUES ( %s )""" % ( table,
+            ', '.join( cols ),
+            ', '.join( [ '%s' for col in cols ] ) )
+        cursor = self.conn.cursor()
+        cursor.execute( sql, values )
         return self.conn.insert_id()
 
-db = None
+singletonDB = None
 
-def getdb():
-    global db
+def db():
+    global singletonDB
 
-    if db is None:
+    if singletonDB is None:
         raise NameError( 'Database has not been initialized' )
-    return db
+    return singletonDB
 
 def init( hostname, username, password, database ):
-    global db
+    global singletonDB
 
-    db = Database( hostname, username, password, database )
+    singletonDB = Database( hostname, username, password, database )
