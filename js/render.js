@@ -278,7 +278,7 @@ NFARenderer.prototype = {
         var theta = Math.atan2( to.y - from.y, to.x - from.x );
 
         if ( arc ) {
-            var cycl = Vector.findCycle( from, to, this.ARC_TRANSITION_OFFSET );
+            var cycl = Geometry.findCycle( from, to, this.ARC_TRANSITION_OFFSET );
             var center = cycl[ 0 ];
 
             var fromToCenter = from.minus( center );
@@ -560,7 +560,7 @@ NFARenderer.prototype = {
 
         if ( showText ) {
             if ( arcView ) {
-                var perpVector = Vector.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
+                var perpVector = Geometry.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
             }
             else {
                 var perpVector = new Vector( 0, 0 );
