@@ -215,4 +215,4 @@ NFA.prototype = {
         }
     }
 };
-NFA.extend( EventEmitter );
+NFA.inherit( EventEmitter );

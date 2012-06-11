@@ -16,7 +16,7 @@ function same( a, b ) {
     return a == b;
 }
 
-Object.defineProperty( Function.prototype, "extend", {
+Object.defineProperty( Function.prototype, "inherit", {
     /**
      * @this {Function}
      *

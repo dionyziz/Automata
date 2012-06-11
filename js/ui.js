@@ -40,6 +40,9 @@ var UI = {
                 $( '#sharer' ).show();
                 input.select();
                 input.focus();
+            }, function( error ) {
+                alert( 'We are sorry, but we failed to store your automaton at this time. Please try again in a moment.\n\n' + error );
+                document.body.style.cursor = 'default';
             } );
             return false;
         } );
@@ -110,6 +113,9 @@ var UI = {
                     Server.Automaton.view( nfaId, function ( automaton ) {
                         document.body.style.cursor = 'default';
                         nfaview.deserialize( automaton.data );
+                    }, function( error ) {
+                        alert( 'We are sorry, but we failed to load your automaton at this time. Please try again in a moment. You can still edit a new automaton!\n\n' + error );
+                        document.body.style.cursor = 'default';
                     } );
                 }
             }

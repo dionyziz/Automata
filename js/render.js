@@ -648,4 +648,4 @@ NFARenderer.prototype = {
         return d.length() < this.ARROW_RADIUS;
     },
 };
-NFARenderer.extend( EventEmitter );
+NFARenderer.inherit( EventEmitter );

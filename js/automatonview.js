@@ -118,7 +118,7 @@ function NFAView( nfa ) {
     } );
 }
 NFAView.prototype = {
-    constructor: 'NFAView',
+    constructor: NFAView,
     serialize: function() {
         return JSON.stringify( {
             states: this.states,

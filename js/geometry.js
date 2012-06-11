@@ -1,6 +1,8 @@
 function Geometry() {
 }
 
+// TODO: consider changing this from a constructor function to just a namespace object
+
 Geometry.findCycle = function( firstPoint, secondPoint, dist ) {
     //This method find the cycle tha passes throw the first and second point and 
     //has distance dist from the perpedicular
@@ -112,7 +114,7 @@ Geometry.perpVector = function( firstPoint, secondPoint, dist ){
 
         return perpVector.scale( dist );
     }
-    else{
+    else {
         var perpConst = ( firstPoint.x + secondPoint.x ) / 2;
         var middlePoint = new Vector( perpConst, firstPoint.y );
         var perpFirPoint = middlePoint;
@@ -132,5 +134,5 @@ Geometry.perpVector = function( firstPoint, secondPoint, dist ){
 };
 
 Geometry.prototype = {
-    constructor: 'Geometry',
+    constructor: Geometry
 };
