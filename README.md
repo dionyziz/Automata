@@ -3,6 +3,8 @@
 and educators better understand and explain the concepts of computation in
 theoretical computer science university departments.
 
+[Try it out](http://automata.discrete.gr/)
+
 Learn more about automata:
  
  * [Wikipedia: Deterministic finite automaton](http://en.wikipedia.org/wiki/Deterministic_finite_automaton)
@@ -15,6 +17,7 @@ Features
  * Real-time editing of automata
  * DFA, NFA, NFAε support
  * Step-by-step computation simulation
+ * Sharing automata with a simple link
  * Fully native web application in vanilla Javascript
 
 Technology
@@ -38,15 +41,10 @@ We're looking to add several features. If you feel like contributing, just go ah
 
 Some ideas for the future:
 
- * Have server-side user accounts
- * Allow saving one's automata
- * Sharing automata with a simple link
-
-And later:
- 
+ * Login with Gmail to keep a list of your automata
  * Conversion from automaton to grammar and back
  * Conversion from automaton to regular expression and back
- * NFA to DFA and vice-versa
+ * NFA to DFA conversion
  * Automaton minimization
 
 License
