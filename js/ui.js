@@ -36,7 +36,7 @@ var UI = {
             Server.Automaton.create( nfaview.serialize(), function( id ) {
                 document.body.style.cursor = 'default';
                 var input = $( '#sharer input' )[ 0 ];
-                input.value = 'http://automata.discrete.gr/automata/#v' + id;
+                input.value = 'http://automata.discrete.gr/#v' + id;
                 $( '#sharer' ).show();
                 input.select();
                 input.focus();
@@ -98,7 +98,7 @@ var UI = {
 
         Runner.init( editor );
 
-        var oldHash = document.location.hash;
+        var oldHash = '';
 
         function checkHash() {
             if ( oldHash != document.location.hash ) {

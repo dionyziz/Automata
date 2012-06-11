@@ -152,12 +152,14 @@ NFAView.prototype = {
                 var r2 = this.viewtransitions[ from ][ to ].position;
 
                 this.viewtransitions[ from ][ to ].position = new Vector( r2.x, r2.y );
+                this.viewtransitions[ from ][ to ].usedInRun = false;
 
                 for ( var sigma in this.nfa.alphabet ) {
                     if ( typeof this.transitions[ from ][ sigma ][ to ] != 'undefined' ) {
                         var r3 = this.transitions[ from ][ sigma ][ to ].position;
 
                         this.transitions[ from ][ sigma ][ to ].position = new Vector( r3.x, r3.y );
+                        this.transitions[ from ][ sigma ][ to ].usedInRun = false;
                     }
                 }
             }

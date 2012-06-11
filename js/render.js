@@ -408,7 +408,7 @@ NFARenderer.prototype = {
                     var sigmaShow = symbols[ i ] + ', ';
                 }
 
-                if ( ( ( importantChar + ', ' ) == sigmaShow ) || ( importantChar == sigmaShow ) ) {
+                if ( ( ( importantChar + ', ' ) === sigmaShow ) || ( importantChar === sigmaShow ) ) {
                     ctx.fillStyle = 'red';
                     ctx.font = 'bold 12pt Verdana';
                 }

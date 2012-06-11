@@ -107,6 +107,12 @@ NFA.prototype = {
         this.emit( 'statedeleted', state );
         --this.numStates;
 
+        if ( this.numStates == 0 ) {
+            this.nextNumState = 0;
+            this.accept = {};
+            this.startState = 'q_0';
+        }
+
         return this.numStates;
     },
     removeAcceptingState: function( state ) {
