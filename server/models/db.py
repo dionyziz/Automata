@@ -5,13 +5,17 @@ class Database:
     def __init__( self, hostname, username, password, database ):
         self.hostname = hostname
         self.username = username
+        self.password = password
         self.database = database
 
+        self.reconnect()
+
+    def reconnect( self ):
         self.conn = MySQLdb.connect(
-            host = hostname,
-            user = username,
-            passwd = password,
-            db = database,
+            host   = self.hostname,
+            user   = self.username,
+            passwd = self.password,
+            db     = self.database,
             use_unicode = True,
             charset = 'UTF8',
             cursorclass = MySQLdb.cursors.DictCursor
@@ -22,7 +26,18 @@ class Database:
 
     def query( self, sql, data ):
         cursor = self.conn.cursor()
-        cursor.execute( sql, data )
+        try:
+            cursor.execute( sql, data )
+        except ( AttributeError, MySQLdb.OperationalError ):
+            # MySQL server has gone away? May happen after a long idle time.
+            # Attempt to reconnect once at this point.
+            # If this fails again, it means that it's not a ping issue, but something else
+            # so allow exception to be thrown through the callstack and logged or caught
+            # at a higher level.
+            self.reconnect()
+            cursor = self.conn.cursor()
+            cursor.execute( sql, data )
+            
         return cursor.fetchall()
 
     def select( self, table, where = {}, select = ( '*' ) ):
