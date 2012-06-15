@@ -408,7 +408,7 @@ NFARenderer.prototype = {
                     var sigmaShow = symbols[ i ] + ', ';
                 }
 
-                if ( ( ( importantChar + ', ' ) == sigmaShow ) || ( importantChar == sigmaShow ) ) {
+                if ( ( ( importantChar + ', ' ) === sigmaShow ) || ( importantChar === sigmaShow ) ) {
                     ctx.fillStyle = 'red';
                     ctx.font = 'bold 12pt Verdana';
                 }
@@ -648,4 +648,4 @@ NFARenderer.prototype = {
         return d.length() < this.ARROW_RADIUS;
     },
 };
-NFARenderer.extend( EventEmitter );
+NFARenderer.inherit( EventEmitter );

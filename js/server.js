@@ -1,17 +1,21 @@
 var Server = {
     Automaton: {
-        create: function( data, callback ) {
+        create: function( data, callback, error ) {
             $.post( 'api/automaton/create', {
                 name: '',
                 data: data
             }, function( result ) {
                 callback( result.id );
-            }, 'json' );
+            }, 'json' ).error( function( jqXHR, settings, thrownError ) {
+                error( thrownError );
+            } );
         },
-        view: function( id, callback ) {
+        view: function( id, callback, error ) {
             $.get( 'api/automaton/' + id, {}, function( result ) {
                 callback( result );
-            }, 'json' );
+            }, 'json' ).error( function( jqXHR, settings, thrownError ) {
+                error( thrownError );
+            } );
         }
     }
 };

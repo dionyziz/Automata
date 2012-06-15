@@ -7,7 +7,7 @@ Vector.fromPolar = function( rho, theta ) {
 };
 
 Vector.prototype = {
-    constructor: 'Vector',
+    constructor: Vector,
     plus: function( operand ) {
         return new Vector(
             this.x + operand.x, this.y + operand.y

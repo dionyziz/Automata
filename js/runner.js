@@ -67,6 +67,7 @@ var Runner = {
         this.enabled = true;
     },
     run: function() {
+        this.editor.inputSubmit();
         this.inputString = prompt( 'Enter input string: ', 'abba' );
 
         if ( typeof this.inputString != 'string' ) {
