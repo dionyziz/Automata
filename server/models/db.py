@@ -1,5 +1,6 @@
 import MySQLdb
 import MySQLdb.cursors
+from sys import stderr
 
 class Database:
     def __init__( self, hostname, username, password, database ):
@@ -25,7 +26,7 @@ class Database:
         self.conn.close()
 
     def query( self, sql, data ):
-        print( "Executing SQL query: %s" % ( sql ) )
+        stderr.write( "Executing SQL query: %s\n" % ( sql ) )
 
         cursor = self.conn.cursor()
         try:

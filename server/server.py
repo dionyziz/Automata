@@ -1,17 +1,18 @@
 from bottle import Bottle, route, run, debug, request
 from os import listdir, path
+from sys import stderr
 import models.db
 import ConfigParser
 
-print( "Automata Server is starting" )
+stderr.write( "Automata Server is starting" )
 
 config = ConfigParser.RawConfigParser()
 
 if path.exists( 'automata-local.cfg' ):
-    print( 'Using configuration file automata-local.cfg' )
+    stderr.write( 'Using configuration file automata-local.cfg\n' )
     config.read( 'automata-local.cfg' )
 elif path.exists( 'automata.cfg' ):
-    print( 'Using configuration file automata.cfg' )
+    stderr.write( 'Using configuration file automata.cfg\n' )
     config.read( 'automata.cfg' )
 else:
     raise NameError( 'Automata is not configured' )
@@ -31,15 +32,15 @@ def initdb():
     database = config.get( 'db', 'database' )
     models.db.init( hostname, username, password, database )
 
-print( "Connecting to MySQL datatabase" )
+stderr.write( "Connecting to MySQL datatabase\n" )
 initdb()
-print( "Connected to MySQL database" )
+stderr.write( "Connected to MySQL database\n" )
 
-print( "Initializing bottle.py app" )
+stderr.write( "Initializing bottle.py app\n" )
 app = Bottle()
-print( "Bottle.py app initialized" )
+stderr.write( "Bottle.py app initialized\n" )
 
-print( "Loading controllers" )
+stderr.write( "Loading controllers\n" )
 
 for controller in listdir( 'controllers' ):
     if controller[ -3: ] == '.py' and controller != '__init__.py': 
@@ -48,9 +49,9 @@ for controller in listdir( 'controllers' ):
         controllerClass = getattr( controllerModule, controllerName ).controller
         controllerClass( app, request )
 
-print( "Controllers loaded" )
+stderr.write( "Controllers loaded\n" )
 
 debug( True )
 run( app, host = host, port = port, reloader = True )
 
-print( "Automata server is shutting down" )
+stderr.write( "Automata server is shutting down\n" )
