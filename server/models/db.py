@@ -21,6 +21,8 @@ class Database:
         self.conn.close()
 
     def query( self, sql, data ):
+        print( "Executing SQL query: %s" % ( sql ) )
+
         cursor = self.conn.cursor()
         cursor.execute( sql, data )
         return cursor.fetchall()
@@ -42,7 +44,7 @@ class Database:
 
     def selectOne( self, table, where = {}, select = ( '*' ) ):
         rows = self.select( table, where, select )
-        if rows is None:
+        if len( rows ) == 0:
             return None
         return rows[ 0 ]
 
@@ -55,8 +57,7 @@ class Database:
         sql = """INSERT INTO %s ( %s ) VALUES ( %s )""" % ( table,
             ', '.join( cols ),
             ', '.join( [ '%s' for col in cols ] ) )
-        cursor = self.conn.cursor()
-        cursor.execute( sql, values )
+        self.query( sql, values )
         return self.conn.insert_id()
 
 singletonDB = None

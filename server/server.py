@@ -3,6 +3,8 @@ from os import listdir, path
 import models.db
 import ConfigParser
 
+print( "Automata Server is starting" )
+
 config = ConfigParser.RawConfigParser()
 
 if path.exists( 'automata-local.cfg' ):
@@ -29,9 +31,15 @@ def initdb():
     database = config.get( 'db', 'database' )
     models.db.init( hostname, username, password, database )
 
+print( "Connecting to MySQL datatabase" )
 initdb()
+print( "Connected to MySQL database" )
 
+print( "Initializing bottle.py app" )
 app = Bottle()
+print( "Bottle.py app initialized" )
+
+print( "Loading controllers" )
 
 for controller in listdir( 'controllers' ):
     if controller[ -3: ] == '.py' and controller != '__init__.py': 
@@ -40,5 +48,9 @@ for controller in listdir( 'controllers' ):
         controllerClass = getattr( controllerModule, controllerName ).controller
         controllerClass( app, request )
 
+print( "Controllers loaded" )
+
 debug( True )
 run( app, host = host, port = port, reloader = True )
+
+print( "Automata server is shutting down" )
