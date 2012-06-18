@@ -1,17 +1,18 @@
 import models.automaton
+from sys import stderr
 
 class controller:
     def __init__( self, app, request ):
         @app.route( '/automaton/create', method = 'POST' )
         def create():
-            print( "Processing automaton/create request" )
+            stderr.write( "Processing automaton/create request\n" )
 
             name = request.forms.name
             data = request.forms.data
 
-            print( "Creating new automaton" )
+            stderr.write( "Creating new automaton\n" )
             id = models.automaton.create( name, data )
-            print( "New automaton was created with id %i" % ( id ) )
+            stderr.write( "New automaton was created with id %i\n" % ( id ) )
 
             return { 'id': id }
         @app.route( '/automaton/delete', method = 'POST' )
@@ -22,11 +23,11 @@ class controller:
             pass
         @app.route( '/automaton/<id:int>', method = 'GET' )
         def view( id ):
-            print( "Processing automaton/view request with id %i" % ( id ) )
+            stderr.write( "Processing automaton/view request with id %i\n" % ( id ) )
 
-            print( "Retrieving automaton" )
+            stderr.write( "Retrieving automaton\n" )
             item = models.automaton.item( id )
-            print( "Automaton successfully retrieved" )
+            stderr.write( "Automaton successfully retrieved\n" )
 
             return item
         @app.route( '/automaton/list', method = 'GET' )
