@@ -72,10 +72,8 @@ class Database:
             VALUES ( %s in values )"""
         cols = tuple(data.keys())
         values = tuple(data.values())
-        sql = """INSERT INTO %s ( %s ) VALUES ( %s )""" %
-            (table,
-             ', '.join(cols),
-             ', '.join(['%s' for col in cols]))
+        sql = """INSERT INTO %s ( %s ) VALUES ( %s )""" % (table, ', '.join(cols),
+                                                           ', '.join(['%s' for col in cols]))
         self.query(sql, values)
         return self.conn.insert_id()
 
