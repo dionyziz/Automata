@@ -36,9 +36,7 @@ var UI = {
             Server.Automaton.create( nfaview.serialize(), function( id ) {
                 document.body.style.cursor = 'default';
                 var input = $( '#sharer input' )[ 0 ];
-		protocol = document.location.protocol;
-		hostname = document.location.hostname;
-                input.value = protocol + '//' + hostname + '#v' + id;
+                input.value = document.location + '#v' + id;
                 $( '#sharer' ).show();
                 input.select();
                 input.focus();
