@@ -36,7 +36,7 @@ var UI = {
             Server.Automaton.create( nfaview.serialize(), function( id ) {
                 document.body.style.cursor = 'default';
                 var input = $( '#sharer input' )[ 0 ];
-                input.value = 'http://automata.discrete.gr/#v' + id;
+                input.value = document.location + '#v' + id;
                 $( '#sharer' ).show();
                 input.select();
                 input.focus();
