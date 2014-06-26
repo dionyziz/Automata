@@ -178,7 +178,7 @@ ol {
     width: 16px;
     height: 16px;
 }
-#dialogoverlay{
+#dialogoverlay {
 	display: none;
 	opacity: .8;
 	position: fixed;
@@ -188,7 +188,7 @@ ol {
 	width: 100%;
 	z-index: 10;
 }
-#dialogbox{
+#dialogbox {
 	display: none;
 	position: fixed;
 	background: #000;
@@ -196,7 +196,23 @@ ol {
 	width:550px;
 	z-index: 10;
 }
-#dialogbox > div{ background:#FFF; margin:8px; }
-#dialogbox > div > #dialogboxhead{ background: #DDD; font-size:19px; padding:10px; color:#333; }
-#dialogbox > div > #dialogboxbody{ background:#FFF; padding:20px; color:#FFF; }
-#dialogbox > div > #dialogboxfoot{ background: #DDD; padding:10px; text-align:right; }
+#dialogbox > div {
+	background:#FFF;
+	margin:8px;
+}
+#dialogbox > div > #dialogboxhead{
+	background: #DDD;
+	font-size:19px;
+	padding:10px;
+	color:#333;
+}
+#dialogbox > div > #dialogboxbody{
+	background:#FFF;
+	padding:20px;
+	color:#FFF;
+}
+#dialogbox > div > #dialogboxfoot{ 
+	background: #DDD;
+	padding:10px;
+	text-align:right;
+}
