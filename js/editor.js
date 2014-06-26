@@ -219,28 +219,28 @@ NFAEditor.prototype = {
             this.runStep();
         }
     },
-    function CustomAlert(){
-	    this.render = function(dialog){
-		    var winW = window.innerWidth;
-	        var winH = window.innerHeight;
-		    var dialogoverlay = document.getElementById('dialogoverlay');
-    	    var dialogbox = document.getElementById('dialogbox');
+    function customAlert(){
+    	this.render = function(dialog){
+		var winW = window.innerWidth;
+		var winH = window.innerHeight;
+		var dialogoverlay = document.getElementById('dialogoverlay');
+    		var dialogbox = document.getElementById('dialogbox');
     		dialogoverlay.style.display = "block";
-    	    dialogoverlay.style.height = winH+"px";
-    	    dialogbox.style.width = "700px";
+    		dialogoverlay.style.height = winH+"px";
+    		dialogbox.style.width = "700px";
     		dialogbox.style.left = (winW/2) - (600 * .5)+"px";
-    	    dialogbox.style.top = "100px";
-    	    dialogbox.style.display = "block";
+    		dialogbox.style.top = "100px";
+    		dialogbox.style.display = "block";
     		document.getElementById('dialogboxhead').innerHTML = "Keyboard Shortcut Help";
-    	    document.getElementById('dialogboxbody').innerHTML = "<table style='width:500px'> <tr> <td>Double Click</td> <td>: Creates new State</td></tr><tr><td>Double Click on State</td><td>: Edits State</td></tr><tr><td>Left Click</td><td>: Selects State/Transition</td></tr><tr><td>Space</td><td>: Toggles Accepteness of current State</td></tr><tr><td>i</td><td>: Makes the current State initial</td></tr><tr><td>Delete</td><td>: Deletes current State/Transition and all assosiated Transitions</td></tr><tr><td>Esc</td><td>: Deselects State/Transition</td></tr><tr><td>?</td><td>: Shows Keyboard Help</td></tr></table>";
+    		document.getElementById('dialogboxbody').innerHTML = "<table style='width:500px'> <tr> <td>Double Click</td> <td>: Creates new State</td></tr><tr><td>Double Click on State</td><td>: Edits State</td></tr><tr><td>Left Click</td><td>: Selects State/Transition</td></tr><tr><td>Space</td><td>: Toggles Accepteness of current State</td></tr><tr><td>i</td><td>: Makes the current State initial</td></tr><tr><td>Delete</td><td>: Deletes current State/Transition and all assosiated Transitions</td></tr><tr><td>Esc</td><td>: Deselects State/Transition</td></tr><tr><td>?</td><td>: Shows Keyboard Help</td></tr></table>";
     		document.getElementById('dialogboxfoot').innerHTML = '<button onclick="Alert.ok()">OK</button>';
-	    }
+	}
     	this.ok = function(){
     		document.getElementById('dialogbox').style.display = "none";
     		document.getElementById('dialogoverlay').style.display = "none";
     	}
     },
-    var Alert = new CustomAlert();
+    var Alert = new customAlert();
     play: function() {
         // TODO: This function is huge and it includes many closures
         //       which long-term can cause garbage collection issues.
