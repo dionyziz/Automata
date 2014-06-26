@@ -642,6 +642,9 @@ NFAEditor.prototype = {
                 case 32: //space
                     self.inverseAccepting();
                     break;
+                case 63 // ?
+                    alert("Keyboard Shortcut Help\nDouble Click\t\t: Creates new State\nDouble Click on State: Edits State\nLeft Click\t\t\t: Selects State/Transition\nSpace\t\t\t: Toggles Acceptness of current State\ni\t\t\t\t: Makes current State the initial State\ndelete\t\t\t: Deletes current State/Transition. If State, then deletes all associated Transitions\nEsc\t\t\t\t: Deselects State/Transition\n?\t\t\t\t: Displays Keyboard Shortcut Help\n");
+	                break;
                 case 73: // i -- change initial state
                     if ( self.selectedElement[ 0 ] == 'state' ){
                         nfa.startState = self.selectedElement[ 1 ];
