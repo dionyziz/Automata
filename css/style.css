@@ -192,8 +192,8 @@ ol {
 	display: none;
 	position: fixed;
 	background: #000;
-	border-radius:7px; 
-	width:550px;
+	border-radius: 7px; 
+	width: 550px;
 	z-index: 10;
 }
 #dialogbox > div {
@@ -209,7 +209,7 @@ ol {
 #dialogbox > div > #dialogboxbody{
 	background:#FFF;
 	padding:20px;
-	color:#FFF;
+	color:#000;
 }
 #dialogbox > div > #dialogboxfoot{ 
 	background: #DDD;
