@@ -662,7 +662,7 @@ NFAEditor.prototype = {
                     self.inverseAccepting();
                     break;
                 case 63: // ?
-                    render();
+                    self.render();
                     break;
                 case 73: // i -- change initial state
                     if ( self.selectedElement[ 0 ] == 'state' ){
