@@ -19,10 +19,10 @@ class Automaton(object):
         return DB.selectOne('automata', {'id': id}, ('id', 'name', 'data', 'uid'))
 
     def delete(self, id):
-        pass
+        return DB.delete('automata', {'id': id})
 
     def update(self, id, name, data):
-        pass
+        return DB.update('automata', {'name': name, 'data': data}, {'id': id})
 
 class User(object):
 

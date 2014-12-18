@@ -69,13 +69,30 @@ class Automaton:
 
             return item
 
-        @bottle.route('/api/automaton/delete/<id:int>', method='POST')
+        @bottle.route('/api/automaton/<id:int>/delete', method='POST')
         def delete(id):
-            pass
+            if models.Automaton().view(id):
+                session = bottle.request.environ.get('beaker.session')
+                uid = models.Automaton().view(id).get('uid')
+                if session['user'] == uid:
+                    logging.info("Deleting automaton with id %s\n", id)
+                    return models.Automaton().delete(id)
+                else:
+                    logging.info("Unauthorised user %s\n tried to remove Automaton %i",
+                            session['user'], id)
+            else:
+                logging.info("Automation with id %s is nonexistant\n", id)
 
-        @bottle.route('/api/automaton/update/<id:int>', method='POST')
+            return None
+
+        @bottle.route('/api/automaton/<id:int>/update', method='POST')
         def update(id):
-            pass
+             logging.info("Updating automaton with id %s\n", (id))
+
+             name = bottle.request.forms.name
+             data = bottle.request.forms.data
+
+             return models.Automaton().update(id, name, data)
 
 
 class Session:

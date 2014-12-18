@@ -18,6 +18,19 @@ var Server = {
             $.get( 'api/automaton/' + id, {}, function( result ) {
                 callback( result );
             }, 'json' ).error( makeErrorHandler( error ) );
+        },
+        delete: function( id, callback, error ) {
+            $.post( 'api/automaton/' + id + '/delete', {}, function( result ) {
+                callback( result );
+            }, 'json' ).error( makeErrorHandler( error ) );
+        },
+        update: function( data, id, callback, error ) {
+            $.post( 'api/automaton/' + id + '/update', {
+                name: '',
+                data: data
+            }, function( result ) {
+                callback( result );
+            }, 'json' ).error( makeErrorHandler( error ) );
         }
     },
     Session: {

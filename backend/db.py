@@ -2,7 +2,6 @@ import MySQLdb
 import MySQLdb.cursors
 import logging
 
-
 class Database:
     def __init__(self, hostname, username, password, database):
         self.hostname = hostname
@@ -44,14 +43,15 @@ class Database:
 
     def select(self, table, where={}, select=('*')):
         """SELECT (select) FROM (table) WHERE (where)"""
-        sql = "SELECT %s FROM %s" % (', '.join(select), table)
+        sql = "SELECT %s FROM %s " % (', '.join(select), table)
         if len(where) == 0:
             return self.query(sql, ())
-        sql += " WHERE"
         data = []
+        operator = 'WHERE '
         for w in where:
-            sql += " " + str(w) + " = %s"
+            sql += operator + str(w) + " = %s "
             data.append(where[w])
+            operator = 'AND '
         return self.query(sql, tuple(data))
 
     # Runs a SELECT but return only first row
@@ -69,6 +69,31 @@ class Database:
               table, ', '.join(cols), ', '.join(['%s' for col in cols]))
         self.query(sql, values)
         return self.conn.insert_id()
+
+    def delete(self, table, where={}):
+        """DELETE row FROM (table) WHERE (where)"""
+        sql = "DELETE FROM %s " %  (table)
+        data = []
+        operator = 'WHERE '
+        for w in where:
+            sql += operator + str(w) + " = %s "
+            data.append(where[w])
+            operator = 'AND '
+        return self.query(sql, tuple(data))
+
+    def update(self, table, data, where={}):
+        """UPDATE (table) SET (column=value) WHERE (where)"""
+        cols = tuple(data.keys())
+        values = tuple(data.values())
+        values += tuple(where.values())
+        sql = 'UPDATE %s SET %s ' % (
+                table, ' = %s, '.join(cols) + ' = %s' )
+        operator = 'WHERE '
+        for w in where:
+            sql += operator + str(w) + " = %s"
+            operator = "AND "
+        return self.query(sql, values)
+
 
 singletonDB = None
 
