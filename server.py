@@ -17,6 +17,8 @@ logging.info("Application initialized with session\n")
 Controllers.StaticFiles()
 Controllers.Routes()
 Controllers.Automaton()
+Controllers.Session()
+Controllers.Users()
 
 logging.info("Controllers imported\n")
 

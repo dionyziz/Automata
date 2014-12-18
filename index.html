@@ -24,7 +24,16 @@
                 <li class='run button'><a href=''><span></span>Run</a></li>
                 <li class='share button'><a href=''><span></span>Share</a></li>
             </ol>
-            <div id="user">
+            <div>
+              <ol class="account" id="profile" style="display: none;">
+                <li id="user">
+                  <img id="uimage" src="" class="avatar" width="27" height="27" />
+                </li>
+                <a href="api/logout">Sign out</a>
+              </ol>
+              <ol class="account" id="login" style="display: none;">
+                <a href="api/login">Sign in with Google</a>
+              </ol>
             </div>
             <div class='eof'></div>
         </header>

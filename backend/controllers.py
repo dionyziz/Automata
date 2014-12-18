@@ -4,8 +4,29 @@ import rauth
 import config
 import models
 import logging
+from models import User
 
-page = open('../index.html', "r").read()
+user_info_uri = 'https://www.googleapis.com/oauth2/v1/userinfo'
+oauth2 = rauth.OAuth2Service
+google = oauth2(
+    client_id=config.GOOGLE.CLIENT_ID,
+    client_secret=config.GOOGLE.CLIENT_SECRET,
+    name='google',
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    base_url='https://accounts.google.com/o/oauth2/auth',
+)
+
+if config.DEVELOPMENT:
+    redirect_uri = '{uri}:{port}/api/success'.format(
+                   uri="http://" + config.HOST,
+                   port=config.PORT)
+    index = 'index.html'
+else:
+    redirect_uri = config.BASE_URI + "/api/success"
+    index = '../index.html'
+
+page = open(index, "r").read()
 
 class StaticFiles:
     def __init__(self):
@@ -31,17 +52,19 @@ class Automaton:
             name = bottle.request.forms.name
             data = bottle.request.forms.data
 
-            logging.info("Creating new automaton\n")
-
-            id = models.Automaton().create(name, data)
-
-            logging.info("New automaton was created with id %i. ", (id))
+            if 'user' in session:
+                id = models.Automaton().create(name, data, session['user'])
+                logging.info("""New automaton was created with id %i
+                                under user %s""", id, session['user'])
+            else:
+                id = models.Automaton().create(name, data)
+                logging.info("New automaton was created with id %i. ", id)
 
             return str(id)
 
         @bottle.route('/api/automaton/<id:int>', method='GET')
         def view(id):
-            logging.info("Retrieving automaton with id %s\n", (id))
+            logging.info("Retrieving automaton with id %s\n", id)
             item = models.Automaton().view(id)
             logging.info("Automaton successfully retrieved\n")
 
@@ -54,3 +77,76 @@ class Automaton:
         @bottle.route('/api/automaton/update/<id:int>', method='POST')
         def update(id):
             pass
+
+class Session:
+    def __init__(self):
+        @bottle.route('/api/user', method='GET')
+        def view():
+            session = bottle.request.environ.get('beaker.session')
+            if 'user' in session:
+                return session['user']
+            return "0"
+
+        @bottle.route('/api/login<:re:/?>')
+        def create():
+            params = {
+                'scope': 'email profile',
+                'response_type': 'code',
+                'redirect_uri': redirect_uri}
+            url = google.get_authorize_url(**params)
+
+            bottle.redirect(url)
+
+        @bottle.route('/api/logout')
+        def delete():
+            session = bottle.request.environ.get('beaker.session')
+            if 'user' in session:
+                del session['user']
+
+            bottle.redirect('/')
+
+        @bottle.route('/api/success<:re:/?>')
+        def login_success():
+            user = User()
+            session = bottle.request.environ.get('beaker.session')
+
+            auth_session = google.get_auth_session(
+                data={'code': bottle.request.params.get('code'),
+                      'redirect_uri': redirect_uri,
+                      'grant_type': 'authorization_code'},
+                decoder=json.loads)
+
+            session_json = auth_session.get(user_info_uri).json()
+            session_json = dict((k, unicode(v).encode('utf-8')) for k, v in
+                           session_json.iteritems())  # For non-Ascii characters
+
+            # Checks if user exists, if not creates new one
+            if user.get(session_json['id']) is None:
+                user_info = {
+                    'google_id': session_json['id'],
+                    'name': session_json['name'],
+                    'email': session_json['email'],
+                    'picture': session_json['picture']}
+                logging.info("Hurray!! %s joined us.\n", user_info['name'])
+                user.create(user_info)
+                logging.info("Created user %s \n", user_info['google_id'])
+
+            # Creates user session
+            session['user'] = session_json['id']
+
+            bottle.redirect('/')
+
+
+class Users:
+    def __init__(self):
+        @bottle.route('/api/user/<gid:int>', method='GET')
+        def view(gid):
+            user = User()
+            return user.get(gid)
+
+        @bottle.route('/api/user/<gid:int>/automata', method='GET')
+        def get_automata(gid):
+            user = User()
+            automata = json.dumps( user.automata(gid) )
+
+            return automata

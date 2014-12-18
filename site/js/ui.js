@@ -125,6 +125,26 @@ var UI = {
         }
         checkHash();
         setInterval( checkHash, 250 );
+
+        Server.Session.view( function ( session ) {
+            if ( session ) {
+                Server.User.get( session, function ( user ) {
+                    $( '#profile' ).show();
+                    $( '#user' ).append( user.name );
+                    $( '#uimage' ).attr( "src", user.picture );
+                    $( '#uimage' ).attr( "alt", user.name );
+                }, function( error ) {
+                    alert( 'Sorry, but we could not load user \n\n' + error );
+                    document.body.style.cursor = 'default';
+                } );
+            }
+            else {
+                $('#login').show();
+            }
+        }, function( error ) {
+            alert( 'Sorry, but something went wrong\n\n' + error );
+            document.body.style.cursor = 'default';
+        } );
     }
 };
 UI.init();
