@@ -5,7 +5,7 @@ var Server = {
                 name: '',
                 data: data
             }, function( result ) {
-                callback( result.id );
+                callback( result );
             }, 'json' ).error( function( jqXHR, settings, thrownError ) {
                 error( thrownError );
             } );

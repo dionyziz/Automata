@@ -1,5 +1,7 @@
-"""config.py: Default configuration."""
-"""Modify this file and rename it to `config.py` """
+"""
+config.py: Default configuration.
+Rename this file to `config.py` and modify it
+"""
 
 # Server:
 DEVELOPMENT = True                # False for Deployment

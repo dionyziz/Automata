@@ -1,11 +1,8 @@
 import bottle
 from beaker.middleware import SessionMiddleware
+import logging
 import backend.config as config
 import backend.controllers as Controllers
-import logging
-
-logging.basicConfig(format='%(levelname)s:%(asctime)s %(message)s',
-                    filename='automata.log')
 
 session_opts = {
     'session.type': 'file',
@@ -19,6 +16,8 @@ logging.info("Application initialized with session\n")
 # Importing controllers
 Controllers.StaticFiles()
 Controllers.Routes()
+Controllers.Automaton()
+
 logging.info("Controllers imported\n")
 
 if config.DEVELOPMENT:
