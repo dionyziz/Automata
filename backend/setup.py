@@ -22,11 +22,11 @@ if DB.query("SHOW TABLES") != ():
     if ans == 'y' or ans == 'yes':
         print("Deleting old users and automata tables\n")
         DB.query("DROP TABLE users, automata;")
-        logging.warning("Setup deleted tables\n")
+        logging.info("Setup deleted tables\n")
 
 tables = open(backend_path + '/etc/automata.sql', 'r')
 print("\nCreating new tables\n")
 DB.query(tables.read())
 
-logging.warning("Setup completed succesfully")
+logging.info("Setup completed succesfully")
 print("\nSetup completed succesfully")
