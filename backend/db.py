@@ -26,7 +26,7 @@ class Database:
     def close(self):
         self.conn.close()
 
-    def query(self, sql, data):
+    def query(self, sql, data=[]):
         logging.debug("Executing SQL query: %s\n" % (sql))
 
         cursor = self.conn.cursor()
