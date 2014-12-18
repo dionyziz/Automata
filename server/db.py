@@ -33,13 +33,10 @@ class Database:
         try:
             cursor.execute(sql, data)
         except (AttributeError, MySQLdb.OperationalError):
-            # MySQL server has gone away? May happen after a long idle time.
-            # Attempt to reconnect once at this point.
+            # Attempt to reconnect lost connection.
             # If this fails again, it means that it's not a ping issue,
-            # but something else
             # so allow exception to be thrown through the callstack and
-            # logged or caught
-            # at a higher level.
+            # logged or caught at a higher level.
             self.reconnect()
             cursor = self.conn.cursor()
             cursor.execute(sql, data)
