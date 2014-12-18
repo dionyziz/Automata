@@ -28,5 +28,20 @@ tables = open(backend_path + '/etc/automata.sql', 'r')
 print("\nCreating new tables\n")
 DB.query(tables.read())
 
+print("Creating wsgi file")
+
+with open(backend_path + '/server.wsgi', 'w') as server:
+    server.write("""import os
+import sys
+
+path = "%s"
+os.chdir(os.path.dirname(__file__))
+sys.path = [path] + sys.path
+
+from server import app
+
+application = app
+""" % (config.DEPLOY_PATH + '/backend'))
+
 logging.info("Setup completed succesfully")
 print("\nSetup completed succesfully")

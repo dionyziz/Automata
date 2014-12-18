@@ -4,9 +4,10 @@ Rename this file to `config.py` and modify it
 """
 
 # Server:
-DEVELOPMENT = True                # False for Deployment
+DEVELOPMENT = True                             # False for Deployment
+DEPLOY_PATH = "/var/www/discrete.gr/automata"  # Path to automata root
 SERVER = 'wsgiref'
-BASE_URI = 'http://automata.discrete.gr/'
+BASE_URI = 'http://automata.discrete.gr'
 HOST = 'localhost'
 PORT = 8080
 
