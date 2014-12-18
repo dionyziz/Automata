@@ -156,6 +156,13 @@ ol {
 .edit.button span {
     background-image: url( '../images/pencil.png' );
 }
+.update.button span {
+    background-image: url( '../images/update.png' );
+}
+.delete.button span {
+    background-image: url( '../images/delete.png' );
+}
+   
 #inputSymbol {
     position: absolute;
     height: 20px;

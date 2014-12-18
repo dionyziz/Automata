@@ -5,6 +5,10 @@ var UI = {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight - 39;
     },
+    button_load: function() {
+        var id = document.location.toString().split( '#v' )[1];
+        if ( id ) $( ".update, .delete" ).show();
+    },
     init: function() {
         // TODO: nfaview should not be a global variable here
         var editor;
@@ -46,6 +50,34 @@ var UI = {
             } );
             return false;
         } );
+        $( '.toolbar .update' ).click( function() {
+            document.body.style.cursor = 'wait';
+            Server.Automaton.update( nfaview.serialize(), document.location.toString().split( '#v' )[1], function( ) {
+                document.body.style.cursor = 'default';
+                var input = $( '#sharer input' )[ 0 ];
+                input.value = document.location.toString();
+                $( '#sharer' ).show();
+                input.select();
+                input.focus();
+            }, function( error ) {
+                alert( 'We are sorry, but we failed to store your automaton at this time. Please try again in a moment.\n\n' + error );
+                document.body.style.cursor = 'default';
+            } );
+            return false;
+        } );
+        $( '.toolbar .delete' ).click( function() {
+            document.body.style.cursor = 'wait';
+            id = document.location.toString().split( '#v' )[1]
+            Server.Automaton.delete( id, function( ) {
+                document.body.style.cursor = 'default';
+                alert( 'Succesfully removed Automaton with id ' + id );
+            }, function( error ) {
+                alert( 'We are sorry, but we failed to remove your automaton at this time. Please try again in a moment.\n\n' + error );
+                document.body.style.cursor = 'default';
+            } );
+            return false;
+        } );
+ 
         $( '#sharer .close' ).click( function() {
             $( '#sharer' ).hide();
             return false;
@@ -104,6 +136,7 @@ var UI = {
         var oldHash = '';
 
         function checkHash() {
+            UI.button_load();
             if ( oldHash != document.location.hash ) {
                 oldHash = document.location.hash;
                 if ( document.location.hash.substr( 0, 2 ) == '#v' ) {
