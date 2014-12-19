@@ -7,6 +7,7 @@ function NFARenderer( canvas, nfaview ) {
     this.mouseOverElement = [];
     this.selectedStates = {};
     this.offset = new Vector( canvas.offsetLeft, canvas.offsetTop );
+    this.rendering_requested = false;
 
     function mouseOut( element, e ) {
         self.emit( 'mouseout' + element[ 0 ], element[ 1 ], e );
