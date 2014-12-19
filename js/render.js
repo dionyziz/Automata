@@ -195,38 +195,20 @@ NFARenderer.prototype = {
         ctx.save();
         if ( this.runMode && this.nfaview.nfa.currentStates[ state ] == state ) {
             if ( !this.nfaview.nfa.accept[ state ] ) {
-                radgrad.addColorStop( 0, '#ff9999' );
-                radgrad.addColorStop( 0.8, '#ff3030' );
-                radgrad.addColorStop( 1, '#ff9999' );
+                ctx.fillStyle = '#ff3030';
                 ctx.strokeStyle = 'red';
                 ctx.lineWidth = 2;
-                ctx.shadowColor = '#ff4040';
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                ctx.shadowBlur = 5 + ( this.flash * 10 );
             }
             else {
-                radgrad.addColorStop( 0, '#ccffcc' );
-                radgrad.addColorStop( 0.8, '#00ff00' );
-                radgrad.addColorStop( 1, '#ccffcc' );
+                ctx.fillStyle = '#00ff00';
                 ctx.strokeStyle = 'green';
                 ctx.lineWidth = 2;
-                ctx.shadowColor = '#00ff00';
-                ctx.shadowOffsetX = 0;
-                ctx.shadowOffsetY = 0;
-                ctx.shadowBlur = 5 + ( this.flash * 10 );
             }
         }
         else {
-            radgrad.addColorStop( 0, '#fff' );
-            radgrad.addColorStop( 0.8, '#e8ecf0' );
-            radgrad.addColorStop( 1, '#fff' );
+            ctx.fillStyle = '#e8ecf0';
             ctx.strokeStyle = 'black';
             ctx.lineWidth = 2;
-            ctx.shadowColor = 'rgba( 0, 0, 0, 0.3 )';
-            ctx.shadowOffsetX = 0;
-            ctx.shadowOffsetY = 0;
-            ctx.shadowBlur = 5;
 
             switch ( importance ) {
                 case 'normal':
@@ -247,7 +229,6 @@ NFARenderer.prototype = {
         ctx.beginPath();
         ctx.arc( 0, 0, this.STATE_RADIUS, 0, 2 * Math.PI, true );
         ctx.stroke();
-        ctx.fillStyle = radgrad;
         ctx.fill();
         ctx.linewidth = 1;
         ctx.beginPath();
