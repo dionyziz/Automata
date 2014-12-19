@@ -53,6 +53,7 @@ function NFARenderer( canvas, nfaview ) {
         }
         self.mouseOverElement = test;
         self.emit( 'mousemove', e );
+        self.requestRendering();
     }
     nfaview.nfa.on( 'beforestatedeleted', function( state ) {
         if ( self.mouseOverElement[ 0 ] == 'state' ) {
@@ -175,6 +176,8 @@ NFARenderer.prototype = {
         if ( this.selectionRectShow ) {
             this.renderRect( this.selectionRectFrom, this.selectionRectTo );
         }
+
+        this.rendering_requested = false;
     },
     renderRect : function( from, to ) {
         var ctx = this.ctx;
@@ -627,6 +630,12 @@ NFARenderer.prototype = {
         var d = arrowhead.minus( mouse );
 
         return d.length() < this.ARROW_RADIUS;
+    },
+    requestRendering: function () {
+        if (!this.rendering_requested) {
+            this.rendering_requested = true;
+            requestAnimFrame( this.render.bind(this) );
+        }
     },
 };
 NFARenderer.inherit( EventEmitter );
