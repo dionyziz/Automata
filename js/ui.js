@@ -97,7 +97,7 @@ var UI = {
         editor.play();
 
         // Rerender the content when the window is resized
-        $( window ).resize( editor.renderer.render.bind(editor.renderer) );
+        $( window ).resize( editor.renderer.render.bind( editor.renderer ) );
 
         Runner.init( editor );
 

@@ -7,7 +7,7 @@ function NFARenderer( canvas, nfaview ) {
     this.mouseOverElement = [];
     this.selectedStates = {};
     this.offset = new Vector( canvas.offsetLeft, canvas.offsetTop );
-    this.rendering_requested = false;
+    this.renderingRequested = false;
 
     function mouseOut( element, e ) {
         self.emit( 'mouseout' + element[ 0 ], element[ 1 ], e );
@@ -178,7 +178,7 @@ NFARenderer.prototype = {
             this.renderRect( this.selectionRectFrom, this.selectionRectTo );
         }
 
-        this.rendering_requested = false;
+        this.renderingRequested = false;
     },
     renderRect : function( from, to ) {
         var ctx = this.ctx;
@@ -633,9 +633,9 @@ NFARenderer.prototype = {
         return d.length() < this.ARROW_RADIUS;
     },
     requestRendering: function () {
-        if (!this.rendering_requested) {
-            this.rendering_requested = true;
-            requestAnimFrame( this.render.bind(this) );
+        if ( !this.renderingRequested ) {
+            this.renderingRequested = true;
+            requestAnimFrame( this.render.bind( this ) );
         }
     },
 };
