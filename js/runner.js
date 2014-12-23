@@ -130,7 +130,7 @@ var Runner = {
         this.editor.setRun( false );
         $( '.runner' ).hide();
         this.enabled = false;
-        this.displayRejectedStatus();
+        this.editor.renderer.requestRendering();
         return false;
     }
 };
