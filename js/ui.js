@@ -96,6 +96,9 @@ var UI = {
         editor = new NFAEditor( this.canvas, nfaview, [ inputSymbol, errorSymbol ], changeStateName );
         editor.play();
 
+        // Rerender the content when the window is resized
+        $( window ).resize( editor.renderer.render.bind( editor.renderer ) );
+
         Runner.init( editor );
 
         var oldHash = '';

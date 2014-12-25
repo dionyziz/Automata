@@ -32,10 +32,6 @@ NFAEditor.prototype = {
         this.renderer.mode = mode;
         this.elementDeselected();
     },
-    mainLoop: function() {
-        this.renderer.render();
-        requestAnimFrame( this.mainLoop.bind( this ) ); 
-    },
     elementSelected: function( element ) {
         var oldtype = this.selectedElement[ 0 ];
         var oldid = this.selectedElement[ 1 ];
@@ -648,6 +644,7 @@ NFAEditor.prototype = {
                     }
                     break;
             }
+            renderer.requestRendering();
         };
         window.requestAnimFrame = ( function() {
             return window.requestAnimationFrame
@@ -659,6 +656,6 @@ NFAEditor.prototype = {
                        window.setTimeout( callback, 1000 / 60 );
                    };
         } )();
-        this.mainLoop();
+        renderer.requestRendering();
     }
 };

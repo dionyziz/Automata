@@ -7,6 +7,7 @@ function NFARenderer( canvas, nfaview ) {
     this.mouseOverElement = [];
     this.selectedStates = {};
     this.offset = new Vector( canvas.offsetLeft, canvas.offsetTop );
+    this.renderingRequested = false;
 
     function mouseOut( element, e ) {
         self.emit( 'mouseout' + element[ 0 ], element[ 1 ], e );
@@ -53,6 +54,7 @@ function NFARenderer( canvas, nfaview ) {
         }
         self.mouseOverElement = test;
         self.emit( 'mousemove', e );
+        self.requestRendering();
     }
     nfaview.nfa.on( 'beforestatedeleted', function( state ) {
         if ( self.mouseOverElement[ 0 ] == 'state' ) {
@@ -175,6 +177,8 @@ NFARenderer.prototype = {
         if ( this.selectionRectShow ) {
             this.renderRect( this.selectionRectFrom, this.selectionRectTo );
         }
+
+        this.renderingRequested = false;
     },
     renderRect : function( from, to ) {
         var ctx = this.ctx;
@@ -627,6 +631,12 @@ NFARenderer.prototype = {
         var d = arrowhead.minus( mouse );
 
         return d.length() < this.ARROW_RADIUS;
+    },
+    requestRendering: function () {
+        if ( !this.renderingRequested ) {
+            this.renderingRequested = true;
+            requestAnimFrame( this.render.bind( this ) );
+        }
     },
 };
 NFARenderer.inherit( EventEmitter );

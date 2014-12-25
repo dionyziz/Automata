@@ -65,6 +65,7 @@ var Runner = {
 
         this.displayRunStatus();
         this.enabled = true;
+        this.editor.renderer.requestRendering();
     },
     run: function() {
         this.editor.inputSubmit();
@@ -96,6 +97,7 @@ var Runner = {
         else {
             this.displayRejectedStatus();
         }
+        this.editor.renderer.requestRendering();
         return false;
     },
     rewind: function() {
@@ -111,6 +113,7 @@ var Runner = {
 
         this.editor.gotoStep( this.inputString, this.runStep );
         this.displayRunStatus();
+        this.editor.renderer.requestRendering();
 
         return false;
     },
@@ -120,13 +123,14 @@ var Runner = {
         this.editor.gotoStep( this.inputString, this.runStep );
         this.displayRunStatus();
         this.displayAcceptanceResult();
-
+        this.editor.renderer.requestRendering();
         return false;
     },
     close: function() {
         this.editor.setRun( false );
         $( '.runner' ).hide();
         this.enabled = false;
+        this.editor.renderer.requestRendering();
         return false;
     }
 };
