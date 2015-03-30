@@ -1,2 +1,9 @@
 .htaccess
-js/jquery-1.7.2.js
+site/js/jquery-1.7.2.js
+.data
+automata.log
+build
+backend/*.pyc
+backend/config.py
+backend/build
+server.wsgi

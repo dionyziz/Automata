@@ -6,7 +6,7 @@ theoretical computer science university departments.
 [Try it out](http://automata.discrete.gr/)
 
 Learn more about automata:
- 
+
  * [Wikipedia: Deterministic finite automaton](http://en.wikipedia.org/wiki/Deterministic_finite_automaton)
  * [Wikipedia: Non-deterministic finite automaton](http://en.wikipedia.org/wiki/Nondeterministic_finite_automaton)
  * Sipsers' book [Introduction to the Theory of Computation](http://www.amazon.com/Introduction-Theory-Computation-Michael-Sipser/dp/0534950973/ref=sr_1_2?s=books&ie=UTF8&qid=1339239779&sr=1-2)
@@ -24,6 +24,32 @@ Technology
 ==========
 Automata is written in HTML5 and Javascript for the client and Python for the server.
 
+
+Deployment
+==========
+You will need apache with wsgi_mod and Python 2.7
+
+First configure your application.
+
+    $ cd (Automata_path)
+    $ cp backend/config.example.py backend/config.py
+    $ vim backend/config.py
+
+Then run setup.py
+
+    $ python backend/setup.py
+
+Finally configure apache with wsgi.
+You should put something like this to your host at `/etc/apache2/sites-enabled/(site)`
+
+     <VirtualHost *:80>
+         ServerName automata.discrete.gr
+         DocumentRoot /var/www/discrete.gr/automata
+         WSGIScriptAlias / /var/www/discrete.gr/automata/backend/server.wsgi
+     </VirtualHost>
+
+For development just ignore the last step and run `python server.py` inside the `/backend` folder.
+
 Contributors
 ============
 
@@ -36,6 +62,7 @@ Contributors:
  * Dionysis "dionyziz" Zindros <dionyziz@gmail.com>
  * Manolis Zampetakis <manoszambe@hotmail.com>
  * Kostis "gtklocker" Karantias <karantiaskostis@gmail.com>
+ * Vasilis (Billy) Spilka <vasspilka@gmail.com>
 
 We're looking to add several features. If you feel like contributing, just go ahead and do a pull request with your patch.
 
@@ -46,6 +73,32 @@ Some ideas for the future:
  * Conversion from automaton to regular expression and back
  * NFA to DFA conversion
  * Automaton minimization
+
+Deployment
+==========
+
+You will need apache with wsgi_mod and Python 2.7
+
+First configure your application.
+
+    $ cd (Automata_path)
+    $ cp backend/config.example.py backend/config.py
+    $ vim backend/config.py
+
+Then run setup.py
+
+    $ python backend/setup.py
+
+Finally configure apache with wsgi.
+You should put something like this to your host at `/etc/apache2/sites-enabled/(site)`
+
+     <VirtualHost *:80>
+         ServerName automata.discrete.gr
+         DocumentRoot /var/www/discrete.gr/automata
+         WSGIScriptAlias / /var/www/discrete.gr/automata/backend/server.wsgi
+     </VirtualHost>
+
+For development ignore the last step and run `python backend/server.py` from root folder.
 
 License
 =======
