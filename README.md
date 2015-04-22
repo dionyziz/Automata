@@ -24,32 +24,6 @@ Technology
 ==========
 Automata is written in HTML5 and Javascript for the client and Python for the server.
 
-
-Deployment
-==========
-You will need apache with wsgi_mod and Python 2.7
-
-First configure your application.
-
-    $ cd (Automata_path)
-    $ cp backend/config.example.py backend/config.py
-    $ vim backend/config.py
-
-Then run setup.py
-
-    $ python backend/setup.py
-
-Finally configure apache with wsgi.
-You should put something like this to your host at `/etc/apache2/sites-enabled/(site)`
-
-     <VirtualHost *:80>
-         ServerName automata.discrete.gr
-         DocumentRoot /var/www/discrete.gr/automata
-         WSGIScriptAlias / /var/www/discrete.gr/automata/backend/server.wsgi
-     </VirtualHost>
-
-For development just ignore the last step and run `python server.py` inside the `/backend` folder.
-
 Contributors
 ============
 
