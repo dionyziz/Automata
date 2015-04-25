@@ -21,18 +21,17 @@ if config.DEVELOPMENT:
     redirect_uri = '{uri}:{port}/api/success'.format(
                    uri="http://" + config.HOST,
                    port=config.PORT)
-    index = 'index.html'
 else:
     redirect_uri = config.BASE_URI + "/api/success"
-    index = '../index.html'
 
-page = open(index, "r").read()
+page = open('../index.html', "r").read()
+
 
 class StaticFiles:
     def __init__(self):
         @bottle.route('/site/<path:re:(images|css|js)\/.+>')
         def server_static(path):
-            return bottle.static_file(path, root='site')
+            return bottle.static_file(path, root='../site')
 
 
 class Routes:
@@ -77,6 +76,7 @@ class Automaton:
         @bottle.route('/api/automaton/update/<id:int>', method='POST')
         def update(id):
             pass
+
 
 class Session:
     def __init__(self):
