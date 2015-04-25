@@ -68,7 +68,9 @@ var Runner = {
         return false;
     },
     step: function ( step ) {
-        if ( step < 0 ) { step = 0; }
+        if ( step < 0 ) {
+            step = 0;
+        }
         if ( step <= this.inputString.length ) {
             var oldStep = this.runStep;
             this.runStep = this.editor.gotoStep( this.inputString, step );
@@ -76,13 +78,16 @@ var Runner = {
             if ( this.runStep == this.inputString.length ) {
                 if ( this.isAccepted() ) {
                     this.displayAcceptedStatus();
-                } else {
+                }
+                else {
                     this.displayRejectedStatus();
                 }
-            } else {
+            }
+            else {
                 if ( oldStep != this.runStep || oldStep == step ) {
                     this.displayRunStatus();
-                } else {
+                }
+                else {
                     this.displayRejectedStatus();
                 }
             }
