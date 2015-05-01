@@ -72,7 +72,7 @@ You should put something like this to your host at `/etc/apache2/sites-enabled/(
          WSGIScriptAlias / /var/www/discrete.gr/automata/backend/server.wsgi
      </VirtualHost>
 
-For development ignore the last step and run `python backend/server.py` from root folder.
+For development ignore the last step and run `cd backend && python server.py` from root folder.
 
 License
 =======
