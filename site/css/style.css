@@ -144,13 +144,13 @@ ol {
 .next.button span {
     background-image: url( '../images/control.png' );
 }
-.prev.button span {
+.previous.button span {
     background-image: url( '../images/control-180.png' );
 }
-.rewind.button span {
+.first.button span {
     background-image: url( '../images/control-stop-180.png' );
 }
-.fastforward.button span {
+.last.button span {
     background-image: url( '../images/control-stop.png' );
 }
 .edit.button span {

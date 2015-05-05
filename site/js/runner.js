@@ -100,15 +100,15 @@ var Runner = {
         this.step( this.runStep + 1 );
         return false;
     },
-    rewind: function() {
+    first: function() {
         this.step( 0 );
         return false;
     },
-    prev: function() {
+    previous: function() {
         this.step( this.runStep - 1 );
         return false;
     },
-    fastforward: function() {
+    last: function() {
         this.step( this.inputString.length );
         return false;
     },

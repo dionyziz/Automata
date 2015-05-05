@@ -26,7 +26,7 @@
     width: 15px;
     height: 17px;
 }
-.runner .fastforward, .runner .next {
+.runner .last, .runner .next {
     float: right;
 }
 #runinput {
