@@ -209,11 +209,13 @@ NFAEditor.prototype = {
         }
         return true;
     },
-    gotoStep: function( input, step ) {
+    gotoStep: function( input, steps ) {
         this.run( input );
-        for ( var i = 0; i < step; ++i ) {
-            this.runStep();
+        var step = 0;
+        while ( step < steps && this.runStep() ) {
+            step += 1;
         }
+        return step;
     },
     play: function() {
         // TODO: This function is huge and it includes many closures

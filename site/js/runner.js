@@ -1,8 +1,8 @@
 var Runner = {
     editor: null,
     enabled: false,
-    inputString: '',
-    runStep: '',
+    inputString: 'abba',
+    runStep: 0,
     init: function( editor ) {
         this.editor = editor;
     },
@@ -21,33 +21,20 @@ var Runner = {
     displayRunStatus: function() {
         $( '#runstatus' ).html( 'Running' );
         $( '#runstatus' ).removeClass( 'reject accept icon' );
+    },
+    displayStep: function() {
         $( '#runinput .state' ).removeClass( 'selected' );
         $( $( '#runinput .state' )[ this.runStep ] ).addClass( 'selected' );
     },
-    displayAcceptanceResult: function() {
-        if ( this.runStep == this.inputString.length ) {
-            var accepting = false;
-
-            for ( var state in nfaview.nfa.currentStates ) {
-                if ( nfaview.nfa.accept[ state ] ) {
-                    accepting = true;
-                    break;
-                }
-            }
-            if ( accepting ) {
-                this.displayAcceptedStatus();
-            }
-            else {
-                this.displayRejectedStatus();
+    isAccepted: function() {
+        for ( var state in nfaview.nfa.currentStates ) {
+            if ( nfaview.nfa.accept[ state ] ) {
+                return true;
             }
         }
-        else if ( nfaview.nfa.currentStates.length == 0 ) {
-            this.displayRejectedStatus();
-        }
+        return false;
     },
-    begin: function() {
-        this.runStep = 0;
-        this.editor.run( this.inputString );
+    open: function() {
         ol = $( '#runinput' );
         ol.empty();
         for ( var i = 0; i < this.inputString.length; ++i ) {
@@ -62,68 +49,67 @@ var Runner = {
             $( '<li class="state">&nbsp;</li>' )
         );
         $( '.runner' ).show();
-
-        this.displayRunStatus();
-        this.enabled = true;
-        this.editor.renderer.requestRendering();
     },
     run: function() {
         this.editor.inputSubmit();
-        this.inputString = prompt( 'Enter input string: ', 'abba' );
-
-        if ( typeof this.inputString != 'string' ) {
-            return false;
-        }
-        for ( var i = 0; i < this.inputString.length; ++i ) {
-            if ( !( this.inputString[ i ] in nfaview.nfa.alphabet ) ) {
+        var s = prompt( 'Enter input string: ', this.inputString ) + '';
+        for ( var i = 0; i < s.length; ++i ) {
+            if ( !( s[ i ] in nfaview.nfa.alphabet ) ) {
+                alert( 'Input string must contain only symbols from the alphabet' );
                 return false;
             }
         }
+        this.inputString = s;
+        this.editor.run( this.inputString );
+        this.open();
+        this.enabled = true;
+        this.runStep = 0;
+        this.step( 0 )
+        return false;
+    },
+    step: function ( step ) {
+        if ( step < 0 ) {
+            step = 0;
+        }
+        if ( step <= this.inputString.length ) {
+            var oldStep = this.runStep;
+            this.runStep = this.editor.gotoStep( this.inputString, step );
 
-        this.begin();
+            if ( this.runStep == this.inputString.length ) {
+                if ( this.isAccepted() ) {
+                    this.displayAcceptedStatus();
+                }
+                else {
+                    this.displayRejectedStatus();
+                }
+            }
+            else {
+                if ( oldStep != this.runStep || oldStep == step ) {
+                    this.displayRunStatus();
+                }
+                else {
+                    this.displayRejectedStatus();
+                }
+            }
+            this.displayStep();
+            this.editor.renderer.requestRendering();
+        }
         return false;
     },
     next: function() {
-        ++this.runStep;
-        if ( this.runStep > this.inputString.length ) {
-            this.runStep = this.inputString.length;
-            return false;
-        }
-
-        if ( this.editor.runStep() ) {
-            this.displayRunStatus();
-            this.displayAcceptanceResult();
-        }
-        else {
-            this.displayRejectedStatus();
-        }
-        this.editor.renderer.requestRendering();
+        this.step( this.runStep + 1 );
         return false;
     },
-    rewind: function() {
-        this.begin();
+    first: function() {
+        this.step( 0 );
         return false;
     },
-    prev: function() {
-        var step = Math.max( 0, this.runStep - 1 );
-
-        this.begin();
-
-        this.runStep = step;
-
-        this.editor.gotoStep( this.inputString, this.runStep );
-        this.displayRunStatus();
-        this.editor.renderer.requestRendering();
-
+    previous: function() {
+        this.step( this.runStep - 1 );
         return false;
     },
-    fastforward: function() {
-        this.begin();
-        this.runStep = this.inputString.length;
-        this.editor.gotoStep( this.inputString, this.runStep );
-        this.displayRunStatus();
-        this.displayAcceptanceResult();
-        this.editor.renderer.requestRendering();
+    last: function() {
+        this.step( this.inputString.length );
         return false;
     },
     close: function() {

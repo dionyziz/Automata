@@ -54,9 +54,9 @@ var UI = {
         // UI buttons
         $( '.toolbar .run' ).click( Runner.run.bind( Runner ) );
         $( '.runner .next' ).click( Runner.next.bind( Runner ) );
-        $( '.runner .rewind' ).click( Runner.rewind.bind( Runner ) );
-        $( '.runner .prev' ).click( Runner.prev.bind( Runner ) );
-        $( '.runner .fastforward' ).click( Runner.fastforward.bind( Runner ) );
+        $( '.runner .first' ).click( Runner.first.bind( Runner ) );
+        $( '.runner .previous' ).click( Runner.previous.bind( Runner ) );
+        $( '.runner .last' ).click( Runner.last.bind( Runner ) );
         $( '.runner .close' ).click( Runner.close.bind( Runner ) );
 
         // Arrow keys
@@ -64,7 +64,7 @@ var UI = {
             switch ( e.keyCode ) {
                 case 37: // left
                     if ( Runner.enabled ) {
-                        Runner.prev();
+                        Runner.previous();
                     }
                     break;
                 case 38: // up
