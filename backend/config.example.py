@@ -20,7 +20,8 @@ class SQL:
     DATABASE = "automata"           # Just use the appropriate setup
 
 
-# Google login
+# Google login & Analytics
 class GOOGLE:
     CLIENT_ID = 'your-client-id'
     CLIENT_SECRET = 'your-client-secret'
+    ANALYTICS = 'your-tracking-id'
