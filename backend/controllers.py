@@ -38,7 +38,7 @@ class Routes:
     def __init__(self):
         @bottle.route('/', methods=['GET'])
         def index():
-            return page
+            return bottle.template(page, t_id=config.GOOGLE.ANALYTICS)
 
 
 class Automaton:
