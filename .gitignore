@@ -4,6 +4,7 @@ site/js/jquery-1.7.2.js
 automata.log
 build
 backend/*.pyc
+backend/__pycache__
 backend/config.py
 backend/build
 server.wsgi

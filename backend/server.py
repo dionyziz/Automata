@@ -4,6 +4,7 @@ import logging
 import config
 import controllers as Controllers
 
+bottle.BaseRequest.MEMFILE_MAX = 16777216 
 session_opts = {
     'session.type': 'file',
     'session.data_dir': '.data',
