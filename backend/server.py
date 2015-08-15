@@ -11,7 +11,7 @@ session_opts = {
     'session.auto': True
 }
 
-app = SessionMiddleware(bottle.app(), session_opts)
+app = application = SessionMiddleware(bottle.app(), session_opts)
 logging.info("Application initialized with session\n")
 
 # Importing Controllers

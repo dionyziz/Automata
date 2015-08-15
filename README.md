@@ -51,7 +51,7 @@ Some ideas for the future:
 Deployment
 ==========
 
-You will need apache with wsgi_mod and Python 2.7
+For Apache with wsgi_mod and Python 2.7
 
 First configure your application.
 
@@ -73,6 +73,8 @@ You should put something like this to your host at `/etc/apache2/sites-enabled/(
      </VirtualHost>
 
 For development ignore the last step and run `cd backend && python server.py` from root folder.
+
+And a guide for [Nginx](https://michael.lustfield.net/nginx/bottle-uwsgi-nginx-quickstart)
 
 License
 =======
