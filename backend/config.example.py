@@ -4,17 +4,17 @@ Rename this file to `config.py` and modify it
 """
 
 # Server:
-DEVELOPMENT = True                             # False for Deployment
+DEVELOPMENT = True                             # Keep True for Docker
 DEPLOY_PATH = "/var/www/discrete.gr/automata"  # Path to automata root
 SERVER = 'wsgiref'
 BASE_URI = 'http://automata.discrete.gr'
-HOST = 'localhost'
-PORT = 8080
+HOST = 'localhost'                             # 0.0.0.0 for Docker
+PORT = 8080                                    # Restart script depends on this
 
 
 # MySQL (Local or Remote)
 class SQL:
-    HOST     = "localhost"          # Here configure your mysql database.
+    HOST     = "127.0.0.1"          # Use ip to avoid unix socket in docker
     USERNAME = "user"               #
     PASSWORD = "password"           # Google cloud SQL can be used
     DATABASE = "automata"           # Just use the appropriate setup

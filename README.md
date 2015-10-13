@@ -22,7 +22,18 @@ Features
 
 Technology
 ==========
-Automata is written in HTML5 and Javascript for the client and Python for the server.
+Automata is written in HTML5 and Javascript for the client, Python for the server and Mysql for database.
+
+
+Use
+===
+Configure your application and run it.
+
+    $ cd (Automata_path)
+    $ cp backend/config.example.py backend/config.py
+    $ vim backend/config.py
+    $ python backend/setup.py
+    $ cd backend && python server.py
 
 Contributors
 ============
@@ -50,31 +61,32 @@ Some ideas for the future:
 
 Deployment
 ==========
+Requirements:
+* Python 2.7
+* Mysql
+* Docker (optional)
 
-For Apache with wsgi_mod and Python 2.7
-
-First configure your application.
+First configure your application. (Note: host should be '0.0.0.0' for Docker)
 
     $ cd (Automata_path)
     $ cp backend/config.example.py backend/config.py
     $ vim backend/config.py
 
-Then run setup.py
+Then run setup.py (setup need a connected Mysql to make tables).
+For Docker you don't need to install python dependencies they will be installed in the container.
 
     $ python backend/setup.py
 
-Finally configure apache with wsgi.
-You should put something like this to your host at `/etc/apache2/sites-enabled/(site)`
+Finally lets create our container by running the deploy script, after specifying our user.
+This updates the code based on master and restarts the application. Anyone with docker rights in the server can run this.
 
-     <VirtualHost *:80>
-         ServerName automata.discrete.gr
-         DocumentRoot /var/www/discrete.gr/automata
-         WSGIScriptAlias / /var/www/discrete.gr/automata/backend/server.wsgi
-     </VirtualHost>
+    $ user=server_user
+    $ ./deploy.sh
 
-For development ignore the last step and run `cd backend && python server.py` from root folder.
+Now you should have a running container on `http://HOST:9020`, redirect your web server accordingly (Nginx or Apache)
+and you should be up and running.
 
-And a guide for [Nginx](https://michael.lustfield.net/nginx/bottle-uwsgi-nginx-quickstart)
+**Alternative without Docker:** guide for [uwsgi with Nginx](https://michael.lustfield.net/nginx/bottle-uwsgi-nginx-quickstart).
 
 License
 =======
