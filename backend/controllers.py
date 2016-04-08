@@ -18,9 +18,8 @@ google = oauth2(
 )
 
 if config.DEVELOPMENT:
-    redirect_uri = '{uri}:{port}/api/success'.format(
-                   uri="http://" + config.HOST,
-                   port=config.PORT)
+    redirect_uri = '{base_uri}/api/success'.format(
+                   base_uri=config.BASE_URI)
 else:
     redirect_uri = config.BASE_URI + "/api/success"
 
