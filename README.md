@@ -83,7 +83,7 @@ This updates the code based on master and restarts the application. Anyone with 
     $ user=server_user
     $ ./deploy.sh
 
-Now you should have a running container on `http://HOST:9020`, redirect your web server accordingly (Nginx or Apache)
+Now you should have a running container on `http://HOST:8080`, redirect your web server accordingly (Nginx or Apache)
 and you should be up and running.
 
 **Alternative without Docker:** guide for [uwsgi with Nginx](https://michael.lustfield.net/nginx/bottle-uwsgi-nginx-quickstart).
