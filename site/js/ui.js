@@ -40,7 +40,7 @@ var UI = {
             Server.Automaton.create( nfaview.serialize(), function( id ) {
                 document.body.style.cursor = 'default';
                 var input = $( '#sharer input' )[ 0 ];
-                input.value = document.location.toString().split( '#v' )[0] + '#v' + id;
+                input.value = document.location.toString().split( '#' )[0] + '#v' + id;
                 $( '#sharer' ).show();
                 input.select();
                 input.focus();
