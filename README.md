@@ -77,11 +77,10 @@ For Docker you don't need to install python dependencies they will be installed 
 
     $ python backend/setup.py
 
-Finally lets create our container by running the deploy script, after specifying our user.
+Finally for docker lets create our container by running the restart script.
 This updates the code based on master and restarts the application. Anyone with docker rights in the server can run this.
 
-    $ user=server_user
-    $ ./deploy.sh
+    $ ./restart.sh
 
 Now you should have a running container on `http://HOST:9020`, redirect your web server accordingly (Nginx or Apache)
 and you should be up and running.
