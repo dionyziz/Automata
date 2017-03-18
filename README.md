@@ -47,7 +47,7 @@ Contributors:
  * Dionysis "dionyziz" Zindros <dionyziz@gmail.com>
  * Manolis Zampetakis <manoszambe@hotmail.com>
  * Kostis "gtklocker" Karantias <karantiaskostis@gmail.com>
- * Vasilis (Billy) Spilka <vasspilka@gmail.com>
+ * Vasilis Spilka <vasspilka@gmail.com>
 
 We're looking to add several features. If you feel like contributing, just go ahead and do a pull request with your patch.
 
