@@ -561,6 +561,109 @@ NFARenderer.prototype = {
 
         ctx.restore();
     },
+    transitionText: function( from, to ) {
+        var outstring = '';
+        var firstSymbol = false;
+        var transitions = this.nfaview.invtransitions[ from ][ to ];
+
+        for ( var sigma in transitions ) {
+            if ( sigma != '$$' ) {
+                if ( firstSymbol === false ) {
+                    firstSymbol = sigma;
+                }
+                outstring += sigma + ', ';
+            }
+        }
+
+        return {
+            text: outstring.slice( 0, -2 ),
+            symbol: firstSymbol
+        };
+    },
+    transitionHasText: function( from, to ) {
+        var transitions = this.nfaview.invtransitions[ from ][ to ];
+
+        for ( var sigma in transitions ) {
+            if ( sigma != '$$' ) {
+                return true;
+            }
+        }
+
+        return false;
+    },
+    transitionTextPosition: function( from, to, arc ) {
+        var transitionView = this.nfaview.viewtransitions[ from ][ to ];
+        var fromView = this.nfaview.states[ from ];
+        var angle = 1 / 2;
+        var target;
+        var circular = false;
+        var arcView = arc && ( !transitionView.detached );
+
+        if ( transitionView.detached ) {
+            target = transitionView.position;
+        }
+        else {
+            var toView = this.nfaview.states[ to ];
+            target = toView.position;
+            circular = toView.state == fromView.state;
+        }
+
+        if ( circular ) {
+            angle *= 2 * Math.PI;
+        }
+        else {
+            angle = fromView.position.minus( target ).theta();
+            if ( arcView ) {
+                angle -= Math.PI / 8;
+            }
+        }
+
+        var offset = Vector.fromPolar( this.STATE_RADIUS, angle );
+        var start = fromView.position.minus( offset );
+
+        if ( circular ) {
+            var center = start.minus( Vector.fromPolar( ( 1 / 2 ) * this.SELF_TRANSITION_RADIUS, angle ) );
+
+            return center.minus( Vector.fromPolar( this.SELF_TRANSITION_RADIUS, angle ) );
+        }
+
+        var end = target;
+        if ( !transitionView.detached ) {
+            if ( arcView ) {
+                angle += Math.PI / 4;
+            }
+            end = end.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+        }
+
+        if ( arcView ) {
+            var perpVector = Geometry.perpVector( start, end, this.ARC_TRANSITION_OFFSET );
+        }
+        else {
+            var perpVector = new Vector( 0, 0 );
+        }
+
+        return start.plus( end ).scale( 1 / 2 ).plus( perpVector );
+    },
+    hitTestText: function( mouse, location, text ) {
+        var ctx = this.ctx;
+
+        if ( text == '' ) {
+            return false;
+        }
+
+        ctx.save();
+        ctx.font = '12pt Verdana';
+        var dim = ctx.measureText( text );
+        var fontHeight = ctx.measureText( 'o' ).width;
+        ctx.restore();
+
+        var padding = 6;
+        var halfWidth = ( dim.width / 2 ) + padding;
+        var halfHeight = ( fontHeight / 2 ) + padding;
+
+        return ( Math.abs( mouse.x - location.x ) <= halfWidth )
+            && ( Math.abs( mouse.y - location.y ) <= halfHeight );
+    },
     hitTest: function( mouse ) {
         // check if the user is hovering a state
         var nfaview = this.nfaview;
@@ -573,6 +676,19 @@ NFARenderer.prototype = {
                 test = this.hitTestState( mouse, state, nfaview.states[ state ].position );
                 if ( test ) {
                     return [ 'state', state ];
+                }
+            }
+            for ( var state in this.nfaview.states ) {
+                for ( var to in this.nfaview.states ) {
+                    var label = this.transitionText( state, to );
+                    if ( label.text != '' ) {
+                        var arc = this.transitionHasText( to, state );
+                        var position = this.transitionTextPosition( state, to, arc );
+
+                        if ( this.hitTestText( mouse, position, label.text ) ) {
+                            return [ 'transition', [ state, label.symbol, to ] ];
+                        }
+                    }
                 }
             }
             for ( var state in this.nfaview.states ) {
