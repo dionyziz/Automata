@@ -78,3 +78,29 @@
 .window {
     position: relative;
 }
+
+@media only screen and ( -webkit-min-device-pixel-ratio: 2 ),
+       only screen and ( min-resolution: 192dpi ),
+       only screen and ( min-resolution: 2dppx ) {
+    #runinput .state,
+    #runinput .transition,
+    .runner h2.accept,
+    .runner h2.reject {
+        background-size: 16px 16px;
+    }
+    #runinput .state.selected {
+        background-image: url( '../images/ui-radio-button@2x.png' );
+    }
+    #runinput .state {
+        background-image: url( '../images/ui-radio-button-uncheck@2x.png' );
+    }
+    #runinput .transition {
+        background-image: url( '../images/arrow-000-small@2x.png' );
+    }
+    .runner h2.accept {
+        background-image: url( '../images/tick-circle-frame@2x.png' );
+    }
+    .runner h2.reject {
+        background-image: url( '../images/cross-circle-frame@2x.png' );
+    }
+}

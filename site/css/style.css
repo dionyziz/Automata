@@ -185,3 +185,47 @@ ol {
     width: 16px;
     height: 16px;
 }
+
+@media only screen and ( -webkit-min-device-pixel-ratio: 2 ),
+       only screen and ( min-resolution: 192dpi ),
+       only screen and ( min-resolution: 2dppx ) {
+    .button span,
+    .close {
+        background-size: 16px 16px;
+    }
+    .move.button span {
+        background-image: url( '../images/hand@2x.png' );
+    }
+    .transition.button span {
+        background-image: url( '../images/layer-shape-line@2x.png' );
+    }
+    .share.button span {
+        background-image: url( '../images/chain@2x.png' );
+    }
+    .run.button span,
+    .next.button span {
+        background-image: url( '../images/control@2x.png' );
+    }
+    .previous.button span {
+        background-image: url( '../images/control-180@2x.png' );
+    }
+    .first.button span {
+        background-image: url( '../images/control-stop-180@2x.png' );
+    }
+    .last.button span {
+        background-image: url( '../images/control-stop@2x.png' );
+    }
+    .edit.button span {
+        background-image: url( '../images/pencil@2x.png' );
+    }
+    .update.button span {
+        background-image: url( '../images/update@2x.png' );
+        background-size: 48px 48px;
+    }
+    .delete.button span {
+        background-image: url( '../images/delete@2x.png' );
+    }
+    .close {
+        background-image: url( '../images/cross-small@2x.png' );
+    }
+}
