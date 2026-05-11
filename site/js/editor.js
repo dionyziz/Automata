@@ -6,6 +6,7 @@ function NFAEditor( canvas, nfaview, input , changeStateName ) {
     this.errorSymbol = input[ 1 ];
     this.changeStateName = changeStateName;
     this.renderer = new NFARenderer( this.canvas, this.nfaview );
+    this.undoStack = [];
 }
 NFAEditor.prototype = {
     constructor: 'Editor',
@@ -17,6 +18,7 @@ NFAEditor.prototype = {
     transitionToChangeName: false,
     mode: 'moveState',
     selectedRectStates: false,
+    undoStack: false,
     shiftPressed: false,
     setRun: function ( mode ) {
         this.nfa.emit( 'removeprevstep' );
@@ -73,15 +75,140 @@ NFAEditor.prototype = {
         this.selectedRectStates = {};
         this.renderer.selectedStates = {};
     },
-    inverseOneAccepting: function( state ) {
-        if ( nfa.accept[ state ] ){
-            nfa.removeAcceptingState( state );
+    createUndoState: function() {
+        return {
+            nfaview: this.nfaview.serialize(),
+            maxz: this.maxz
+        };
+    },
+    saveUndoState: function( state ) {
+        if ( this.undoStack == false ) {
+            this.undoStack = [];
+        }
+
+        state = state || this.createUndoState();
+
+        if ( this.undoStack.length
+          && this.undoStack[ this.undoStack.length - 1 ].nfaview == state.nfaview ) {
+            return;
+        }
+
+        this.undoStack.push( state );
+
+        if ( this.undoStack.length > 50 ) {
+            this.undoStack.shift();
+        }
+    },
+    updateMaxZ: function() {
+        for ( var state in this.nfaview.states ) {
+            if ( this.nfaview.states[ state ].zindex >= this.maxz ) {
+                this.maxz = this.nfaview.states[ state ].zindex + 1;
+            }
+        }
+    },
+    hideElement: function( element ) {
+        if ( !element ) {
+            return;
+        }
+
+        if ( typeof $ != 'undefined' ) {
+            $( element ).hide();
         }
         else {
-            nfa.addAcceptingState( state );
+            element.style.display = 'none';
+        }
+    },
+    resetEditorState: function() {
+        this.selectedElement = false;
+        this.selectedRectStates = {};
+        this.transitionToChange = false;
+        this.stateToChangeName = false;
+        this.transitionToChangeName = false;
+
+        if ( this.inputSymbol ) {
+            this.inputSymbol.value = '';
+            this.hideElement( this.inputSymbol );
+        }
+        if ( this.errorSymbol ) {
+            this.hideElement( this.errorSymbol );
+        }
+        if ( this.changeStateName ) {
+            this.changeStateName.value = '';
+            this.hideElement( this.changeStateName );
+        }
+
+        if ( this.renderer ) {
+            this.renderer.selectedStates = {};
+            this.renderer.selectionRectShow = false;
+            this.renderer.mouseOverElement = false;
+        }
+
+        for ( var state in this.nfaview.states ) {
+            this.nfaview.states[ state ].importance = 'normal';
+        }
+        for ( var from in this.nfaview.viewtransitions ) {
+            for ( var to in this.nfaview.viewtransitions[ from ] ) {
+                this.nfaview.viewtransitions[ from ][ to ].importance = 'normal';
+                this.nfaview.viewtransitions[ from ][ to ].usedInRun = false;
+            }
+        }
+        for ( var from in this.nfaview.transitions ) {
+            for ( var sigma in this.nfaview.transitions[ from ] ) {
+                for ( var to in this.nfaview.transitions[ from ][ sigma ] ) {
+                    this.nfaview.transitions[ from ][ sigma ][ to ].importance = 'normal';
+                    this.nfaview.transitions[ from ][ sigma ][ to ].usedInRun = false;
+                }
+            }
+        }
+    },
+    undo: function() {
+        if ( this.undoStack == false || !this.undoStack.length ) {
+            return false;
+        }
+
+        var state = this.undoStack.pop();
+
+        this.nfaview.deserialize( state.nfaview );
+        this.maxz = state.maxz || 1;
+        this.updateMaxZ();
+        this.resetEditorState();
+        this.nfa.reset();
+        this.renderer.requestRendering();
+
+        return true;
+    },
+    isInputEvent: function( e ) {
+        var target = e.target || e.srcElement;
+        if ( !target ) {
+            return false;
+        }
+
+        return target.tagName == 'INPUT'
+            || target.tagName == 'TEXTAREA'
+            || target.isContentEditable;
+    },
+    inverseOneAccepting: function( state ) {
+        if ( this.nfa.accept[ state ] ){
+            this.nfa.removeAcceptingState( state );
+        }
+        else {
+            this.nfa.addAcceptingState( state );
         }
     },
     inverseAccepting: function() {
+        var shouldSave = false;
+        if ( this.selectedElement[ 0 ] == 'state' ) {
+            shouldSave = true;
+        }
+
+        for ( var selstate in this.selectedRectStates ) {
+            shouldSave = true;
+        }
+
+        if ( shouldSave ) {
+            this.saveUndoState();
+        }
+
         if ( this.selectedElement[ 0 ] == 'state' ) {
             this.inverseOneAccepting( this.selectedElement[ 1 ] );
         }
@@ -94,6 +221,7 @@ NFAEditor.prototype = {
     },
     inputSubmit: function() {
         if ( this.transitionToChange != false ) {
+            var undoState = this.createUndoState();
             var sigma = this.inputSymbol.value;
             var insertOk = false;
             var symboladded = sigma.split(',');
@@ -107,6 +235,9 @@ NFAEditor.prototype = {
                 }
             }
             if ( insertOk ) {
+                if ( this.transitionToChange[ 1 ] != '$$' ) {
+                    this.saveUndoState( undoState );
+                }
                 this.inputSymbol.value = '';
                 this.nfa.deleteTransition( this.transitionToChange[ 0 ], this.transitionToChange[ 1 ], this.transitionToChange[ 2 ] );
                 $( this.errorSymbol ).hide();
@@ -123,12 +254,16 @@ NFAEditor.prototype = {
         }
         else if ( this.stateToChangeName != false ) {
             var newName = this.changeStateName.value;
-            this.nfaview.stateName[ this.stateToChangeName ] = newName;
+            if ( this.nfaview.stateName[ this.stateToChangeName ] != newName ) {
+                this.saveUndoState();
+                this.nfaview.stateName[ this.stateToChangeName ] = newName;
+            }
             this.changeStateName.value = '';
             $( this.changeStateName ).hide();
             this.stateToChangeName = false;
         }
         else if ( this.transitionToChangeName != false ) {
+            var undoState = this.createUndoState();
             var sigma = this.inputSymbol.value;
             var insertOk = false;
             var symboladded = sigma.split(',');
@@ -148,6 +283,7 @@ NFAEditor.prototype = {
                 }
             }
             if ( insertOk ) {
+                this.saveUndoState( undoState );
                 this.inputSymbol.value = '';
                 for ( var sigma in this.nfaview.invtransitions[ this.transitionToChangeName[ 0 ] ][ this.transitionToChangeName[ 2 ] ] ){
                     if ( ! ( sigma in newSymbol ) ) {
@@ -298,6 +434,8 @@ NFAEditor.prototype = {
             }
 
             var client = new Vector( e.clientX, e.clientY );
+            var undoState = self.createUndoState();
+            var changedStatePosition = false;
 
             self.dragging = true;
 
@@ -317,6 +455,7 @@ NFAEditor.prototype = {
 
             function move( e ) {
                 canvas.style.cursor = 'pointer';
+                changedStatePosition = true;
                 var newClient = new Vector( e.clientX, e.clientY );
                 var d = newClient.minus( client );
 
@@ -337,6 +476,9 @@ NFAEditor.prototype = {
                 renderer.on( 'mouseouttransition', transitionOut );
                 self.dragging = false;
                 canvas.style.cursor = 'default';
+                if ( changedStatePosition ) {
+                    self.saveUndoState( undoState );
+                }
             }
             // FIXED: up() function seems to be getting called on mouse down
             //       for some weird reason (a but in the renderer probably),
@@ -375,6 +517,8 @@ NFAEditor.prototype = {
                 var from = self.nfaview.states[ transition[ 0 ] ].position;
                 var angle = from.minus( new Vector( e.clientX, e.clientY ) ).theta();
                 var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+                var undoState = self.createUndoState();
+                var savedUndoState = false;
 
                 canvas.style.cursor = 'pointer';
                 self.dragging = true;
@@ -392,6 +536,8 @@ NFAEditor.prototype = {
                     var client = new Vector( e.clientX, e.clientY );
                     var test = renderer.hitTest( client.minus( renderer.offset ) );
                     if ( test[ 0 ] == 'state' ) {
+                        self.saveUndoState( undoState );
+                        savedUndoState = true;
                         nfaview.nfa.addTransition( transition[ 0 ], '$$', test[ 1 ] );
                         nfaview.newtransitionFrom = false;
                         transition[ 2 ] = test[ 1 ];
@@ -404,6 +550,9 @@ NFAEditor.prototype = {
                     self.dragging = false;
                     canvas.style.cursor = 'default';
                     if ( transition[ 2 ] != false ) {
+                        if ( !savedUndoState ) {
+                            self.saveUndoState( undoState );
+                        }
                         nfaview.nfa.addTransition( transition[ 0 ], '$$', transition[ 2 ] );
                         nfaview.newtransitionFrom = false;
                         renderer.emit( 'mousedowntransition', [ transition[ 0 ], '$$', transition[ 2 ] ], e );
@@ -427,6 +576,9 @@ NFAEditor.prototype = {
                 var from = self.nfaview.states[ transition[ 0 ] ].position;
                 var angle = from.minus( to ).theta();
                 var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+                var undoState = self.createUndoState();
+                var savedUndoState = false;
+                var changedTransition = false;
 
                 self.dragging = true;
 
@@ -435,6 +587,7 @@ NFAEditor.prototype = {
                 function move( e ) {
                     var client = new Vector( e.clientX, e.clientY );
                     var d = client.minus( oldClient );
+                    changedTransition = true;
 
                     transitionView.position = s.plus( d );
 
@@ -445,6 +598,8 @@ NFAEditor.prototype = {
                         var client = new Vector( e.clientX, e.clientY );
                         var test = renderer.hitTest( client.minus( renderer.offset ) );
                         if ( test[ 0 ] == 'state' ) {
+                            self.saveUndoState( undoState );
+                            savedUndoState = true;
                             transitionView.detached = false;
                             for ( var sigma in nfaview.invtransitions[ transition[ 0 ] ][ transition[ 2 ] ] ) {
                                 nfaview.nfa.deleteTransition( transition[ 0 ], sigma, transition[ 2 ] );
@@ -478,6 +633,9 @@ NFAEditor.prototype = {
                     self.dragging = false;
                     canvas.style.cursor = 'default';
                     transitionView.detached = false;
+                    if ( changedTransition && !savedUndoState ) {
+                        self.saveUndoState( undoState );
+                    }
                 }
                 renderer.on( 'mousemove', move );
                 document.addEventListener( 'mouseup', up );
@@ -535,6 +693,7 @@ NFAEditor.prototype = {
                 //       Instead, addState() should RETURN what it has produced.
                 var newState = 'q_' + nfaview.nfa.nextNumState;
 
+                self.saveUndoState();
                 nfaview.nfa.addState( newState );
                 nfaview.states[ newState ].position = new Vector(
                     e.clientX - this.offset.x,
@@ -590,19 +749,31 @@ NFAEditor.prototype = {
             }
         } );
         document.onkeydown = function( e ) {
+            if ( !self.isInputEvent( e )
+              && ( e.ctrlKey || e.metaKey )
+              && e.keyCode == 90 ) {
+                if ( self.undo() ) {
+                    e.preventDefault();
+                }
+                return;
+            }
+
             switch ( e.keyCode ) {
                 case 46: // delete
                     if ( self.isSelectedRect() ) {
+                        self.saveUndoState();
                         for ( var selstate in self.selectedRectStates ) {
                             nfa.deleteState( selstate );
                         }
                         self.selectedRectStates = {};
                         renderer.selectedStates = {};
+                        renderer.requestRendering();
                         return;
                     }
                     if ( self.selectedElement == false ) {
                         return;
                     }
+                    self.saveUndoState();
                     switch ( self.selectedElement[ 0 ] ) {
                         case 'state':
                             nfa.deleteState( self.selectedElement[ 1 ] );
@@ -641,7 +812,9 @@ NFAEditor.prototype = {
                     self.inverseAccepting();
                     break;
                 case 73: // i -- change initial state
-                    if ( self.selectedElement[ 0 ] == 'state' ){
+                    if ( self.selectedElement[ 0 ] == 'state'
+                      && nfa.startState != self.selectedElement[ 1 ] ) {
+                        self.saveUndoState();
                         nfa.startState = self.selectedElement[ 1 ];
                     }
                     break;
