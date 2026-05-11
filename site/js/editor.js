@@ -17,6 +17,7 @@ NFAEditor.prototype = {
     transitionToChangeName: false,
     mode: 'moveState',
     selectedRectStates: false,
+    copiedStates: false,
     shiftPressed: false,
     setRun: function ( mode ) {
         this.nfa.emit( 'removeprevstep' );
@@ -188,6 +189,130 @@ NFAEditor.prototype = {
          && this.selectedElement[ 0 ] == 'transition'
          && same( this.selectedElement[ 1 ], transition )
         return ret;
+    },
+    getSelectedStates: function() {
+        var states = {};
+
+        if ( this.selectedElement != false
+          && this.selectedElement[ 0 ] == 'state' ) {
+            states[ this.selectedElement[ 1 ] ] = this.selectedElement[ 1 ];
+        }
+
+        for ( var state in this.selectedRectStates ) {
+            states[ state ] = state;
+        }
+
+        return states;
+    },
+    copySelectedStates: function() {
+        var selectedStates = this.getSelectedStates();
+        var copiedStates = {};
+        var copiedTransitions = [];
+        var hasStates = false;
+
+        for ( var state in selectedStates ) {
+            hasStates = true;
+        }
+
+        if ( !hasStates ) {
+            return false;
+        }
+
+        for ( var state in selectedStates ) {
+            var position = this.nfaview.states[ state ].position;
+            copiedStates[ state ] = {
+                name: this.nfaview.stateName[ state ],
+                accepting: this.nfa.accept[ state ],
+                position: new Vector( position.x, position.y )
+            };
+        }
+
+        for ( var from in selectedStates ) {
+            for ( var sigma in this.nfa.transitions[ from ] ) {
+                for ( var to in this.nfa.transitions[ from ][ sigma ] ) {
+                    if ( typeof selectedStates[ to ] != 'undefined' ) {
+                        var transition = this.nfaview.viewtransitions[ from ][ to ];
+                        copiedTransitions.push( {
+                            from: from,
+                            sigma: sigma,
+                            to: to,
+                            position: new Vector(
+                                transition.position.x,
+                                transition.position.y
+                            ),
+                            detached: transition.detached
+                        } );
+                    }
+                }
+            }
+        }
+
+        this.copiedStates = {
+            states: copiedStates,
+            transitions: copiedTransitions
+        };
+
+        return true;
+    },
+    pasteSelectedStates: function() {
+        if ( this.copiedStates == false ) {
+            return false;
+        }
+
+        var pastedStates = {};
+        var stateMap = {};
+        var offset = new Vector( 40, 40 );
+
+        this.elementDeselected();
+
+        for ( var state in this.copiedStates.states ) {
+            var newState = 'q_' + this.nfa.nextNumState;
+            var copiedState = this.copiedStates.states[ state ];
+
+            this.nfa.addState( newState );
+            this.nfaview.stateName[ newState ] = copiedState.name;
+            this.nfaview.states[ newState ].position = copiedState.position.plus( offset );
+            this.nfaview.states[ newState ].zindex = this.maxz++;
+
+            if ( copiedState.accepting ) {
+                this.nfa.addAcceptingState( newState );
+            }
+
+            stateMap[ state ] = newState;
+            pastedStates[ newState ] = newState;
+        }
+
+        for ( var i = 0; i < this.copiedStates.transitions.length; ++i ) {
+            var copiedTransition = this.copiedStates.transitions[ i ];
+            var newFrom = stateMap[ copiedTransition.from ];
+            var newTo = stateMap[ copiedTransition.to ];
+
+            this.nfa.addTransition( newFrom, copiedTransition.sigma, newTo );
+            this.nfaview.viewtransitions[ newFrom ][ newTo ].position =
+                copiedTransition.position.plus( offset );
+            this.nfaview.viewtransitions[ newFrom ][ newTo ].detached =
+                copiedTransition.detached;
+        }
+
+        this.selectedRectStates = pastedStates;
+        this.renderer.selectedStates = pastedStates;
+        for ( var pastedState in pastedStates ) {
+            this.nfaview.states[ pastedState ].importance = 'strong';
+        }
+
+        this.copySelectedStates();
+
+        return true;
+    },
+    isInputEvent: function( e ) {
+        var target = e.target || e.srcElement;
+        if ( !target ) {
+            return false;
+        }
+
+        return target.tagName == 'INPUT'
+            || target.tagName == 'TEXTAREA'
+            || target.isContentEditable;
     },
     run: function( input ) {
         // TODO: error message if there is no startState
@@ -590,6 +715,21 @@ NFAEditor.prototype = {
             }
         } );
         document.onkeydown = function( e ) {
+            if ( !self.isInputEvent( e ) && ( e.ctrlKey || e.metaKey ) ) {
+                switch ( e.keyCode ) {
+                    case 67: // c
+                        if ( self.copySelectedStates() ) {
+                            e.preventDefault();
+                        }
+                        return;
+                    case 86: // v
+                        if ( self.pasteSelectedStates() ) {
+                            e.preventDefault();
+                            renderer.requestRendering();
+                        }
+                        return;
+                }
+            }
             switch ( e.keyCode ) {
                 case 46: // delete
                     if ( self.isSelectedRect() ) {
