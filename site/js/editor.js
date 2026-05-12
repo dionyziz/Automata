@@ -6,6 +6,7 @@ function NFAEditor( canvas, nfaview, input , changeStateName ) {
     this.errorSymbol = input[ 1 ];
     this.changeStateName = changeStateName;
     this.renderer = new NFARenderer( this.canvas, this.nfaview );
+    this.undoStack = [];
 }
 NFAEditor.prototype = {
     constructor: 'Editor',
@@ -18,6 +19,38 @@ NFAEditor.prototype = {
     mode: 'moveState',
     selectedRectStates: false,
     shiftPressed: false,
+    maxUndoDepth: 100,
+    pushUndoSnapshot: function( snapshot ) {
+        this.undoStack.push( snapshot );
+        if ( this.undoStack.length > this.maxUndoDepth ) {
+            this.undoStack.shift();
+        }
+    },
+    rememberUndo: function() {
+        this.pushUndoSnapshot( this.nfaview.serialize() );
+    },
+    cancelInput: function() {
+        this.inputSymbol.value = '';
+        this.changeStateName.value = '';
+        $( this.errorSymbol ).hide();
+        $( this.inputSymbol ).hide();
+        $( this.changeStateName ).hide();
+        this.transitionToChange = false;
+        this.stateToChangeName = false;
+        this.transitionToChangeName = false;
+    },
+    undo: function() {
+        if ( this.undoStack.length == 0 ) {
+            return false;
+        }
+
+        this.cancelInput();
+        this.elementDeselected();
+        this.nfaview.deserialize( this.undoStack.pop() );
+        this.renderer.requestRendering();
+
+        return true;
+    },
     setRun: function ( mode ) {
         this.nfa.emit( 'removeprevstep' );
         this.renderer.runMode = mode;
@@ -82,12 +115,26 @@ NFAEditor.prototype = {
         }
     },
     inverseAccepting: function() {
-        if ( this.selectedElement[ 0 ] == 'state' ) {
+        var changed = false;
+
+        if ( this.selectedElement != false && this.selectedElement[ 0 ] == 'state' ) {
+            changed = true;
+        }
+        for ( var selstate in this.selectedRectStates ) {
+            changed = true;
+        }
+        if ( !changed ) {
+            return;
+        }
+
+        this.rememberUndo();
+
+        if ( this.selectedElement != false && this.selectedElement[ 0 ] == 'state' ) {
             this.inverseOneAccepting( this.selectedElement[ 1 ] );
         }
 
         for ( var selstate in this.selectedRectStates ) {
-            if ( selstate != this.selectedElement[ 1 ] ) {
+            if ( this.selectedElement == false || selstate != this.selectedElement[ 1 ] ) {
                 this.inverseOneAccepting( selstate );
             }
         }
@@ -123,7 +170,10 @@ NFAEditor.prototype = {
         }
         else if ( this.stateToChangeName != false ) {
             var newName = this.changeStateName.value;
-            this.nfaview.stateName[ this.stateToChangeName ] = newName;
+            if ( this.nfaview.stateName[ this.stateToChangeName ] != newName ) {
+                this.rememberUndo();
+                this.nfaview.stateName[ this.stateToChangeName ] = newName;
+            }
             this.changeStateName.value = '';
             $( this.changeStateName ).hide();
             this.stateToChangeName = false;
@@ -133,6 +183,7 @@ NFAEditor.prototype = {
             var insertOk = false;
             var symboladded = sigma.split(',');
             var newSymbol = {};
+            this.rememberUndo();
             for ( var i = 0; i < symboladded.length; ++i ) {
                 symbol = symboladded[ i ];
                 if ( symbol != '' ) {
@@ -315,11 +366,17 @@ NFAEditor.prototype = {
                 }
             }
 
+            var beforeMove = self.nfaview.serialize();
+            var moved = false;
+
             function move( e ) {
                 canvas.style.cursor = 'pointer';
                 var newClient = new Vector( e.clientX, e.clientY );
                 var d = newClient.minus( client );
 
+                if ( d.length() > 0 ) {
+                    moved = true;
+                }
                 if ( self.selectedRectStates[ state ] == state ) {
                     for ( var selstate in self.selectedRectStates ) {
                         nfaview.states[ selstate ].position = s[ selstate ].plus( d );
@@ -335,6 +392,9 @@ NFAEditor.prototype = {
                 renderer.removeListener( 'mousemove', move );
                 renderer.on( 'mouseoutstate', stateOut );
                 renderer.on( 'mouseouttransition', transitionOut );
+                if ( moved ) {
+                    self.pushUndoSnapshot( beforeMove );
+                }
                 self.dragging = false;
                 canvas.style.cursor = 'default';
             }
@@ -375,6 +435,7 @@ NFAEditor.prototype = {
                 var from = self.nfaview.states[ transition[ 0 ] ].position;
                 var angle = from.minus( new Vector( e.clientX, e.clientY ) ).theta();
                 var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+                var beforeTransition = self.nfaview.serialize();
 
                 canvas.style.cursor = 'pointer';
                 self.dragging = true;
@@ -392,6 +453,7 @@ NFAEditor.prototype = {
                     var client = new Vector( e.clientX, e.clientY );
                     var test = renderer.hitTest( client.minus( renderer.offset ) );
                     if ( test[ 0 ] == 'state' ) {
+                        self.pushUndoSnapshot( beforeTransition );
                         nfaview.nfa.addTransition( transition[ 0 ], '$$', test[ 1 ] );
                         nfaview.newtransitionFrom = false;
                         transition[ 2 ] = test[ 1 ];
@@ -427,6 +489,7 @@ NFAEditor.prototype = {
                 var from = self.nfaview.states[ transition[ 0 ] ].position;
                 var angle = from.minus( to ).theta();
                 var s = to.plus( Vector.fromPolar( this.STATE_RADIUS, angle ) );
+                var beforeTransition = self.nfaview.serialize();
 
                 self.dragging = true;
 
@@ -445,6 +508,9 @@ NFAEditor.prototype = {
                         var client = new Vector( e.clientX, e.clientY );
                         var test = renderer.hitTest( client.minus( renderer.offset ) );
                         if ( test[ 0 ] == 'state' ) {
+                            if ( test[ 1 ] != transition[ 2 ] ) {
+                                self.pushUndoSnapshot( beforeTransition );
+                            }
                             transitionView.detached = false;
                             for ( var sigma in nfaview.invtransitions[ transition[ 0 ] ][ transition[ 2 ] ] ) {
                                 nfaview.nfa.deleteTransition( transition[ 0 ], sigma, transition[ 2 ] );
@@ -535,6 +601,7 @@ NFAEditor.prototype = {
                 //       Instead, addState() should RETURN what it has produced.
                 var newState = 'q_' + nfaview.nfa.nextNumState;
 
+                self.rememberUndo();
                 nfaview.nfa.addState( newState );
                 nfaview.states[ newState ].position = new Vector(
                     e.clientX - this.offset.x,
@@ -590,9 +657,17 @@ NFAEditor.prototype = {
             }
         } );
         document.onkeydown = function( e ) {
+            if ( ( e.ctrlKey || e.metaKey ) && e.keyCode == 90 ) {
+                self.undo();
+                if ( e.preventDefault ) {
+                    e.preventDefault();
+                }
+                return false;
+            }
             switch ( e.keyCode ) {
                 case 46: // delete
                     if ( self.isSelectedRect() ) {
+                        self.rememberUndo();
                         for ( var selstate in self.selectedRectStates ) {
                             nfa.deleteState( selstate );
                         }
@@ -603,6 +678,7 @@ NFAEditor.prototype = {
                     if ( self.selectedElement == false ) {
                         return;
                     }
+                    self.rememberUndo();
                     switch ( self.selectedElement[ 0 ] ) {
                         case 'state':
                             nfa.deleteState( self.selectedElement[ 1 ] );
@@ -641,7 +717,8 @@ NFAEditor.prototype = {
                     self.inverseAccepting();
                     break;
                 case 73: // i -- change initial state
-                    if ( self.selectedElement[ 0 ] == 'state' ){
+                    if ( self.selectedElement[ 0 ] == 'state' && nfa.startState != self.selectedElement[ 1 ] ){
+                        self.rememberUndo();
                         nfa.startState = self.selectedElement[ 1 ];
                     }
                     break;
